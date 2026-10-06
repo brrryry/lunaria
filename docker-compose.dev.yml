@@ -1,0 +1,47 @@
+# Development Infrastructure (Database + Redis)
+# Run with: pnpm infra:up (or docker compose -f docker-compose.dev.yml up -d)
+
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    container_name: lunaria-postgres
+    restart: unless-stopped
+    ports:
+      # Bind exclusively to loopback interface to prevent public exposure
+      - '127.0.0.1:5432:5432'
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-lunaria}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-lunaria}']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: lunaria-redis
+    restart: unless-stopped
+    ports:
+      # Bind exclusively to loopback interface to prevent public exposure
+      - '127.0.0.1:6379:6379'
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    command: >
+      sh -c "if [ -n \"$$REDIS_PASSWORD\" ]; then exec redis-server --requirepass \"$$REDIS_PASSWORD\"; else exec redis-server; fi"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD-SHELL', 'if [ -n "$$REDIS_PASSWORD" ]; then redis-cli -a "$$REDIS_PASSWORD" ping; else redis-cli ping; fi']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    name: lunaria_postgres_data
+  redis_data:
+    name: lunaria_redis_data

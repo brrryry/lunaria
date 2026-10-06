@@ -1,0 +1,145 @@
+# ==============================================================================
+# Lunaria Monorepo .gitignore
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Dependencies & Package Managers
+# ------------------------------------------------------------------------------
+node_modules/
+*/node_modules/
+.pnpm-store/
+.pnp/
+.pnp.js
+
+# Package Manager Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ------------------------------------------------------------------------------
+# Environment Variables & Secrets (CRITICAL)
+# ------------------------------------------------------------------------------
+.env
+.env.*
+*.env
+# Keep template configuration committed
+!.env.example
+!.env.*.example
+
+# Private keys, certificates, credentials
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+*.jks
+*.keystore
+*.mobileprovision
+credentials.json
+service-account*.json
+
+# ------------------------------------------------------------------------------
+# Build Outputs & Artifacts
+# ------------------------------------------------------------------------------
+# TypeScript compiler outputs
+dist/
+**/dist/
+build/
+**/build/
+out/
+**/out/
+
+# TypeScript Incremental Build Cache
+*.tsbuildinfo
+**/*.tsbuildinfo
+
+# Next.js build output
+.next/
+**/.next/
+
+# Turborepo cache
+.turbo/
+**/.turbo/
+
+# Testing & Coverage
+coverage/
+**/coverage/
+.nyc_output/
+
+# ------------------------------------------------------------------------------
+# Mobile (Expo / React Native)
+# ------------------------------------------------------------------------------
+.expo/
+**/.expo/
+web-build/
+*.orig.*
+
+# Native build outputs
+*.apk
+*.aab
+*.ipa
+
+# Expo Prebuild native directories (if auto-generated)
+# Uncomment if managing bare workflows via config plugins:
+# mobile/android/
+# mobile/ios/
+
+# Google Services files (contain API keys / app identifiers)
+google-services.json
+GoogleService-Info.plist
+
+# ------------------------------------------------------------------------------
+# Databases, Docker & Local State
+# ------------------------------------------------------------------------------
+*.sqlite
+*.sqlite3
+*.db
+pgdata/
+postgres-data/
+docker-data/
+
+# ------------------------------------------------------------------------------
+# Logs & Runtime Dumps
+# ------------------------------------------------------------------------------
+logs/
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# ------------------------------------------------------------------------------
+# Operating System & IDE Files
+# ------------------------------------------------------------------------------
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Editors & IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# ------------------------------------------------------------------------------
+# Temporary Files
+# ------------------------------------------------------------------------------
+tmp/
+temp/
+.temp/
+*.bak
+*.backup

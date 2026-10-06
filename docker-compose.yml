@@ -1,0 +1,47 @@
+# Lunaria Production Services (Backend API + Website)
+# Connects to external/managed PostgreSQL and Redis (configured via .env)
+#
+# Usage:
+#   docker compose up -d --build
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: lunaria-backend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${PORT:-3001}:3001"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+    networks:
+      - app_lunaria
+  website:
+    build:
+      context: .
+      dockerfile: website/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api}
+        NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${NEXT_PUBLIC_VAPID_PUBLIC_KEY:-}
+    container_name: lunaria-website
+    restart: unless-stopped
+    ports:
+      - 3003:3000
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - INTERNAL_API_URL=${INTERNAL_API_URL:-http://backend:3001}
+    depends_on:
+      - backend
+    networks:
+      - app_lunaria
+networks:
+  app_lunaria:
+    external: true
+    name: net-lunaria

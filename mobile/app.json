@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "Lunaria",
+    "slug": "lunaria-money",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#090a0f"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "finance.lunaria.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#090a0f"
+      },
+      "package": "finance.lunaria.app"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": ["expo-router"]
+  }
+}
