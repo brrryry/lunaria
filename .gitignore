@@ -7,6 +7,7 @@
 # ------------------------------------------------------------------------------
 node_modules/
 */node_modules/
+**/node_modules/
 .pnpm-store/
 .pnp/
 .pnp.js
@@ -35,9 +36,6 @@ lerna-debug.log*
 *.crt
 *.pfx
 *.p12
-*.jks
-*.keystore
-*.mobileprovision
 credentials.json
 service-account*.json
 
@@ -56,9 +54,13 @@ out/
 *.tsbuildinfo
 **/*.tsbuildinfo
 
-# Next.js build output
+# Next.js & Compiler Caches
 .next/
 **/.next/
+.swc/
+**/.swc/
+.vercel/
+.cache/
 
 # Turborepo cache
 .turbo/
@@ -68,28 +70,7 @@ out/
 coverage/
 **/coverage/
 .nyc_output/
-
-# ------------------------------------------------------------------------------
-# Mobile (Expo / React Native)
-# ------------------------------------------------------------------------------
-.expo/
-**/.expo/
-web-build/
-*.orig.*
-
-# Native build outputs
-*.apk
-*.aab
-*.ipa
-
-# Expo Prebuild native directories (if auto-generated)
-# Uncomment if managing bare workflows via config plugins:
-# mobile/android/
-# mobile/ios/
-
-# Google Services files (contain API keys / app identifiers)
-google-services.json
-GoogleService-Info.plist
+.vitest/
 
 # ------------------------------------------------------------------------------
 # Databases, Docker & Local State

@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { LunariaDb, transactions, accounts, categoryRules } from '@lunaria/db';
 import { and, desc, eq, gte, ilike, lte, or, sql } from 'drizzle-orm';
 import { DATABASE_TOKEN } from '../database/database.module.js';
@@ -30,7 +30,13 @@ export class TransactionsService {
       conditions.push(eq(transactions.category, filter.category));
     }
     if (filter.search) {
-      conditions.push(ilike(transactions.name, `%${filter.search}%`));
+      const searchCond = or(
+        ilike(transactions.name, `%${filter.search}%`),
+        ilike(transactions.merchantName, `%${filter.search}%`),
+      );
+      if (searchCond) {
+        conditions.push(searchCond);
+      }
     }
 
     const limit = filter.limit || 50;
@@ -152,7 +158,7 @@ export class TransactionsService {
       .limit(1);
 
     if (!target) {
-      throw new Error('Transaction not found');
+      throw new NotFoundException('Transaction not found');
     }
 
     const merchantKey = target.merchantName?.trim();

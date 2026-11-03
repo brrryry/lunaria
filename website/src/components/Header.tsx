@@ -34,7 +34,8 @@ interface HeaderProps {
   accounts?: any[];
   transactions?: any[];
   onSelectTab?: (tab: string) => void;
-  onToggleMobileMenu?: () => void;
+  onToggleSidebar?: () => void;
+  onOpenCopilot?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -45,7 +46,8 @@ export const Header: React.FC<HeaderProps> = ({
   accounts = [],
   transactions = [],
   onSelectTab,
-  onToggleMobileMenu,
+  onToggleSidebar,
+  onOpenCopilot,
 }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -374,6 +376,7 @@ export const Header: React.FC<HeaderProps> = ({
   const tabTitles: Record<string, string> = {
     dashboard: 'Dashboard',
     transactions: 'Transactions',
+    recurring: 'Recurring Transactions',
     investments: 'Investments & Portfolio',
     budget: 'Monthly Budget',
     cashflow: 'Cash Flow Analytics',
@@ -383,23 +386,20 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="h-16 shrink-0 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-[#0a0d14]/90 backdrop-blur-md px-3 sm:px-6 flex items-center justify-between z-20 transition-colors duration-150">
-      {/* Left side: Section Title, Mobile Menu Button & Mobile Logo */}
+      {/* Left side: Section Title */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-        {onToggleMobileMenu && (
+        {onToggleSidebar && (
           <button
             type="button"
-            onClick={onToggleMobileMenu}
+            onClick={onToggleSidebar}
             className="md:hidden p-1.5 -ml-1 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 border border-slate-200 dark:border-slate-800/80 transition-colors shrink-0"
-            aria-label="Open menu drawer"
+            aria-label="Open navigation menu"
           >
             <Menu className="w-4 h-4" />
           </button>
         )}
         <div className="flex items-center gap-2 min-w-0">
-          <div className="md:hidden w-7 h-7 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center p-1 shrink-0">
-            <img src="/logo.png" alt="Lunaria" className="w-full h-full object-contain" />
-          </div>
-          <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight truncate max-w-[140px] sm:max-w-none">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight truncate">
             {tabTitles[activeTab] || 'Dashboard'}
           </h2>
         </div>
@@ -407,6 +407,23 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Action Buttons */}
       <div className="flex items-center gap-2 sm:gap-3">
+        {/* AI Copilot Button */}
+        {onOpenCopilot && (
+          <button
+            type="button"
+            onClick={onOpenCopilot}
+            aria-label="Open Lunaria Copilot"
+            title="Open Lunaria Copilot (⌘K)"
+            className="h-9 px-3 rounded-xl flex items-center gap-1.5 text-xs font-semibold bg-gradient-to-r from-purple-500/10 to-indigo-500/10 hover:from-purple-500/20 hover:to-indigo-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30 transition-all shadow-sm group"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 group-hover:rotate-12 transition-transform" />
+            <span className="hidden sm:inline">Copilot</span>
+            <span className="hidden md:inline-flex px-1.5 py-0.5 rounded text-[10px] font-mono bg-purple-500/20 text-purple-600 dark:text-purple-300 font-medium">
+              ⌘K
+            </span>
+          </button>
+        )}
+
         {/* Theme Toggle Button */}
         <button
           type="button"

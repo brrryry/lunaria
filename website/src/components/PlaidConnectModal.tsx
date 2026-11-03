@@ -107,7 +107,10 @@ export const PlaidConnectModal: React.FC<PlaidConnectModalProps> = ({
       });
 
       if (!res.ok) {
-        throw new Error(`Server returned ${res.status}: ${res.statusText}`);
+        const errData = await res.json().catch(() => null);
+        throw new Error(
+          errData?.message || `Server returned ${res.status}: ${res.statusText}`,
+        );
       }
 
       const data = await res.json();
@@ -162,7 +165,10 @@ export const PlaidConnectModal: React.FC<PlaidConnectModalProps> = ({
           );
 
           if (!res.ok) {
-            throw new Error('Failed to finalize re-authentication on server');
+            const errData = await res.json().catch(() => null);
+            throw new Error(
+              errData?.message || 'Failed to finalize re-authentication on server',
+            );
           }
 
           setExchangeSuccess(true);

@@ -114,6 +114,15 @@ export const BudgetView: React.FC<BudgetViewProps> = () => {
 
   useEffect(() => {
     fetchMonthlyBudget(selectedMonth);
+
+    const handleBudgetUpdate = () => {
+      fetchMonthlyBudget(selectedMonth);
+    };
+
+    window.addEventListener('lunaria:budget_updated', handleBudgetUpdate);
+    return () => {
+      window.removeEventListener('lunaria:budget_updated', handleBudgetUpdate);
+    };
   }, [selectedMonth, fetchMonthlyBudget]);
 
   // Save budget changes to backend
@@ -590,9 +599,9 @@ export const BudgetView: React.FC<BudgetViewProps> = () => {
               </div>
             </div>
 
-            {/* Desktop Income Table */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left text-xs table-fixed">
+            {/* Income Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs table-fixed min-w-[640px]">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 font-semibold uppercase text-[10px]">
                     <th className="pb-3 pl-2 w-1/3">Category</th>
@@ -667,56 +676,6 @@ export const BudgetView: React.FC<BudgetViewProps> = () => {
                 </tbody>
               </table>
             </div>
-
-            {/* Mobile Income Cards */}
-            <div className="md:hidden space-y-2.5">
-              {(budgetData?.incomeCategories || []).map((cat) => {
-                const diff = cat.actual - cat.budgeted;
-                const isMet = cat.actual >= cat.budgeted && cat.budgeted > 0;
-                return (
-                  <div key={cat.category} className="p-3 bg-white/90 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2 shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-900 dark:text-white text-xs">{cat.category}</span>
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                        isMet
-                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
-                          : cat.actual > 0
-                          ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
-                          : 'bg-slate-100 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700/50'
-                      }`}>
-                        {isMet ? 'Target Met' : cat.actual > 0 ? 'In Progress' : 'Pending'}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-200 dark:border-slate-800/50">
-                      <div>
-                        <span className="text-[10px] text-slate-500 block uppercase font-medium">Target</span>
-                        <div className="inline-flex items-center relative mt-0.5">
-                          <span className="text-slate-400 dark:text-slate-500 absolute left-2 text-xs">$</span>
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={cat.budgeted === 0 ? '' : cat.budgeted}
-                            placeholder="0.00"
-                            onChange={(e) => handleBudgetChange(cat.category, 'income', e.target.value)}
-                            onBlur={(e) => handleBlurSave(cat.category, 'income', parseFloat(e.target.value) || 0)}
-                            className="w-24 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-indigo-500 rounded-lg py-1 pl-5 pr-2 text-right text-xs font-mono text-slate-900 dark:text-white focus:outline-none"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="text-right">
-                        <span className="text-[10px] text-slate-500 block uppercase font-medium">Received</span>
-                        <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1 font-mono">
-                          ${cat.actual.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
           </div>
 
           {/* SECTION 2: EXPENSE TARGETS */}
@@ -742,9 +701,9 @@ export const BudgetView: React.FC<BudgetViewProps> = () => {
               </div>
             </div>
 
-            {/* Desktop Expenses Table */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left text-xs table-fixed">
+            {/* Expenses Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs table-fixed min-w-[680px]">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 font-semibold uppercase text-[10px]">
                     <th className="pb-3 pl-2 w-1/3">Category</th>
@@ -860,79 +819,6 @@ export const BudgetView: React.FC<BudgetViewProps> = () => {
                   })}
                 </tbody>
               </table>
-            </div>
-
-            {/* Mobile Expenses Cards */}
-            <div className="md:hidden space-y-2.5">
-              {(budgetData?.expenseCategories || []).map((cat) => {
-                const remaining = cat.remaining;
-                const isOver = remaining < 0;
-                const isNearLimit = !isOver && cat.percentSpent >= 80;
-                const progressColor = isOver
-                  ? 'bg-rose-500'
-                  : isNearLimit
-                  ? 'bg-amber-500 dark:bg-amber-400'
-                  : 'bg-emerald-500 dark:bg-emerald-400';
-
-                return (
-                  <div key={cat.category} className="p-3 bg-white/90 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2.5 shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-900 dark:text-white text-xs">{cat.category}</span>
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                        isOver
-                          ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
-                          : isNearLimit
-                          ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
-                          : cat.budgeted > 0
-                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
-                          : 'bg-slate-100 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700/50'
-                      }`}>
-                        {isOver ? 'Over Budget' : isNearLimit ? 'Near Limit' : cat.budgeted > 0 ? 'On Track' : 'Unbudgeted'}
-                      </span>
-                    </div>
-
-                    {/* Progress Pacing Bar */}
-                    <div>
-                      <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 mb-1">
-                        <span>${cat.actual.toFixed(2)} of ${cat.budgeted.toFixed(2)}</span>
-                        <span className="font-mono font-semibold">{cat.percentSpent}%</span>
-                      </div>
-                      <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-300 ${progressColor}`}
-                          style={{ width: `${Math.min(100, cat.percentSpent)}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-200 dark:border-slate-800/50">
-                      <div>
-                        <span className="text-[10px] text-slate-500 block uppercase font-medium">Budget Envelope</span>
-                        <div className="inline-flex items-center relative mt-0.5">
-                          <span className="text-slate-400 dark:text-slate-500 absolute left-2 text-xs">$</span>
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={cat.budgeted === 0 ? '' : cat.budgeted}
-                            placeholder="0.00"
-                            onChange={(e) => handleBudgetChange(cat.category, 'expense', e.target.value)}
-                            onBlur={(e) => handleBlurSave(cat.category, 'expense', parseFloat(e.target.value) || 0)}
-                            className="w-24 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-indigo-500 rounded-lg py-1 pl-5 pr-2 text-right text-xs font-mono text-slate-900 dark:text-white focus:outline-none"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="text-right">
-                        <span className="text-[10px] text-slate-500 block uppercase font-medium">Remaining</span>
-                        <div className={`text-xs font-bold font-mono mt-1 ${isOver ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                          {isOver ? '-' : '+'}${Math.abs(remaining).toFixed(2)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
             </div>
           </div>
         </div>

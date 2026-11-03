@@ -229,8 +229,55 @@ export class AuthService {
     };
   }
 
-  async resolveUserId(providedUserId?: string, authHeader?: string): Promise<string> {
-    // 1. Try JWT Authorization Bearer header
+  async resolveUserId(
+    providedUserId?: string,
+    authHeader?: string,
+    apiKeyHeader?: string,
+  ): Promise<string> {
+    // 1. Agent API Key authentication (for OpenClaw / autonomous agent integration)
+    const agentKey =
+      this.configService.get<string>('LUNARIA_AGENT_API_KEY') ||
+      process.env.LUNARIA_AGENT_API_KEY;
+
+    if (agentKey && agentKey.trim().length >= 8) {
+      const bearerCandidate =
+        authHeader && authHeader.startsWith('Bearer ')
+          ? authHeader.substring(7).trim()
+          : null;
+      const keyCandidate = (apiKeyHeader || bearerCandidate || '').trim();
+
+      if (keyCandidate && keyCandidate === agentKey.trim()) {
+        const targetEmail = (
+          this.configService.get<string>('LUNARIA_AGENT_USER_EMAIL') ||
+          process.env.LUNARIA_AGENT_USER_EMAIL ||
+          'thisisbryanchan@gmail.com'
+        ).trim().toLowerCase();
+
+        // 1. Look up user by explicitly bound email
+        const [targetUser] = await this.db
+          .select({ id: users.id })
+          .from(users)
+          .where(eq(users.email, targetEmail))
+          .limit(1);
+
+        if (targetUser) {
+          return targetUser.id;
+        }
+
+        // 2. Fallback to the primary account owner (oldest user)
+        const [primaryUser] = await this.db
+          .select({ id: users.id })
+          .from(users)
+          .orderBy(users.createdAt)
+          .limit(1);
+
+        if (primaryUser) {
+          return primaryUser.id;
+        }
+      }
+    }
+
+    // 2. Try JWT Authorization Bearer header
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7).trim();
       try {

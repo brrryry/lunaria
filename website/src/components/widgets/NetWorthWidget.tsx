@@ -269,12 +269,19 @@ const formatAxisMetric = (val: number): string => {
 
         {/* Big Balance & Change */}
         <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
-          <div className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-            ${Math.floor(netWorth).toLocaleString()}
-            <span className="text-slate-400 dark:text-slate-500 text-lg sm:text-xl font-medium">
-              .{Math.abs(Math.round((netWorth % 1) * 100)).toString().padStart(2, '0')}
-            </span>
-          </div>
+          {(() => {
+            const totalCents = Math.round(Math.abs(netWorth) * 100);
+            const whole = Math.floor(totalCents / 100).toLocaleString();
+            const cents = (totalCents % 100).toString().padStart(2, '0');
+            return (
+              <div className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                {netWorth < 0 ? '-' : ''}${whole}
+                <span className="text-slate-400 dark:text-slate-500 text-lg sm:text-xl font-medium">
+                  .{cents}
+                </span>
+              </div>
+            );
+          })()}
 
           {hasAccounts && (
             <span

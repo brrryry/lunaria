@@ -4,7 +4,7 @@ describe('Push Notifications Service', () => {
   interface MockPushSubscription {
     id: string;
     userId: string;
-    platform: 'web' | 'expo' | 'ios' | 'android';
+    platform: 'web';
     token: string;
     endpoint?: string | null;
     p256dh?: string | null;
@@ -29,29 +29,23 @@ describe('Push Notifications Service', () => {
     if (!sub.platform || !sub.token) {
       throw new Error('Missing platform or token');
     }
-    if (sub.platform === 'web') {
-      if (!sub.endpoint || !sub.keys?.p256dh || !sub.keys?.auth) {
-        throw new Error('Web Push subscriptions must have endpoint and p256dh/auth keys');
-      }
+    if (sub.platform !== 'web') {
+      throw new Error('Unsupported push subscription platform');
     }
-    if (sub.platform === 'expo') {
-      if (!sub.token.startsWith('ExponentPushToken[')) {
-        throw new Error('Invalid Expo push token format');
-      }
+    if (!sub.endpoint || !sub.keys?.p256dh || !sub.keys?.auth) {
+      throw new Error('Web Push subscriptions must have endpoint and p256dh/auth keys');
     }
     return true;
   }
 
-  // Helper simulating dispatch to web & expo subscriptions
+  // Helper simulating dispatch to web push subscriptions
   async function dispatchPushToSubscriptions(
     subs: MockPushSubscription[],
     payload: PushPayload,
     sendWebPushMock: (sub: MockPushSubscription, payloadStr: string) => Promise<{ status: number }>,
-    sendExpoPushMock: (tokens: string[], payload: PushPayload) => Promise<{ status: number }>,
     deleteSubMock: (id: string) => Promise<void>,
   ) {
     const webSubs = subs.filter((s) => s.platform === 'web' && s.endpoint && s.p256dh && s.auth);
-    const expoSubs = subs.filter((s) => s.platform === 'expo' && s.token.startsWith('ExponentPushToken['));
 
     // Web push
     for (const sub of webSubs) {
@@ -73,12 +67,6 @@ describe('Push Notifications Service', () => {
           await deleteSubMock(sub.id);
         }
       }
-    }
-
-    // Expo push
-    if (expoSubs.length > 0) {
-      const tokens = expoSubs.map((s) => s.token);
-      await sendExpoPushMock(tokens, payload);
     }
   }
 
@@ -103,25 +91,24 @@ describe('Push Notifications Service', () => {
     ).toThrow('Web Push subscriptions must have endpoint and p256dh/auth keys');
   });
 
-  it('validates expo push token format correctly', () => {
+  it('rejects missing platform or unsupported platforms', () => {
     expect(() =>
       validateSubscription({
-        platform: 'expo',
-        token: 'ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]',
+        platform: '',
+        token: 'https://updates.push.services.mozilla.com/wpush/v2/xyz',
       }),
-    ).not.toThrow();
+    ).toThrow('Missing platform or token');
 
     expect(() =>
       validateSubscription({
-        platform: 'expo',
-        token: 'invalid_token_format',
+        platform: 'unsupported',
+        token: 'token-123',
       }),
-    ).toThrow('Invalid Expo push token format');
+    ).toThrow('Unsupported push subscription platform');
   });
 
   it('dispatches web push notifications to active browser endpoints', async () => {
     const sendWebPush = vi.fn().mockResolvedValue({ status: 201 });
-    const sendExpoPush = vi.fn().mockResolvedValue({ status: 200 });
     const deleteSub = vi.fn().mockResolvedValue(undefined);
 
     const subscriptions: MockPushSubscription[] = [
@@ -145,12 +132,10 @@ describe('Push Notifications Service', () => {
         url: '/transactions',
       },
       sendWebPush,
-      sendExpoPush,
       deleteSub,
     );
 
     expect(sendWebPush).toHaveBeenCalledTimes(1);
-    expect(sendExpoPush).not.toHaveBeenCalled();
     expect(deleteSub).not.toHaveBeenCalled();
 
     const [calledSub, calledPayload] = sendWebPush.mock.calls[0];
@@ -163,7 +148,6 @@ describe('Push Notifications Service', () => {
 
   it('prunes expired web push subscriptions when endpoint returns 410 Gone', async () => {
     const sendWebPush = vi.fn().mockResolvedValue({ status: 410 });
-    const sendExpoPush = vi.fn().mockResolvedValue({ status: 200 });
     const deleteSub = vi.fn().mockResolvedValue(undefined);
 
     const subscriptions: MockPushSubscription[] = [
@@ -186,7 +170,6 @@ describe('Push Notifications Service', () => {
         body: 'Over budget',
       },
       sendWebPush,
-      sendExpoPush,
       deleteSub,
     );
 
@@ -194,60 +177,13 @@ describe('Push Notifications Service', () => {
     expect(deleteSub).toHaveBeenCalledWith('sub-expired');
   });
 
-  it('batches and sends expo push notifications to mobile devices', async () => {
+  it('dispatches web push notifications across multiple browser endpoints for the same user', async () => {
     const sendWebPush = vi.fn().mockResolvedValue({ status: 201 });
-    const sendExpoPush = vi.fn().mockResolvedValue({ status: 200 });
     const deleteSub = vi.fn().mockResolvedValue(undefined);
 
     const subscriptions: MockPushSubscription[] = [
       {
-        id: 'sub-mobile-1',
-        userId: 'user-123',
-        platform: 'expo',
-        token: 'ExponentPushToken[device-token-abc-123]',
-        createdAt: new Date(),
-      },
-      {
-        id: 'sub-mobile-2',
-        userId: 'user-123',
-        platform: 'expo',
-        token: 'ExponentPushToken[device-token-def-456]',
-        createdAt: new Date(),
-      },
-    ];
-
-    await dispatchPushToSubscriptions(
-      subscriptions,
-      {
-        title: 'Deposit Alert',
-        body: 'Paycheck received: $3,500.00',
-        url: '/transactions',
-      },
-      sendWebPush,
-      sendExpoPush,
-      deleteSub,
-    );
-
-    expect(sendWebPush).not.toHaveBeenCalled();
-    expect(sendExpoPush).toHaveBeenCalledTimes(1);
-    expect(sendExpoPush).toHaveBeenCalledWith(
-      ['ExponentPushToken[device-token-abc-123]', 'ExponentPushToken[device-token-def-456]'],
-      {
-        title: 'Deposit Alert',
-        body: 'Paycheck received: $3,500.00',
-        url: '/transactions',
-      },
-    );
-  });
-
-  it('supports simultaneous multi-platform push delivery to web and mobile', async () => {
-    const sendWebPush = vi.fn().mockResolvedValue({ status: 201 });
-    const sendExpoPush = vi.fn().mockResolvedValue({ status: 200 });
-    const deleteSub = vi.fn().mockResolvedValue(undefined);
-
-    const subscriptions: MockPushSubscription[] = [
-      {
-        id: 'sub-web',
+        id: 'sub-web-1',
         userId: 'user-123',
         platform: 'web',
         token: 'https://updates.push.services.mozilla.com/wpush/v2/user',
@@ -257,10 +193,13 @@ describe('Push Notifications Service', () => {
         createdAt: new Date(),
       },
       {
-        id: 'sub-expo',
+        id: 'sub-web-2',
         userId: 'user-123',
-        platform: 'expo',
-        token: 'ExponentPushToken[phone1]',
+        platform: 'web',
+        token: 'https://fcm.googleapis.com/fcm/send/user-chrome',
+        endpoint: 'https://fcm.googleapis.com/fcm/send/user-chrome',
+        p256dh: 'key2',
+        auth: 'auth2',
         createdAt: new Date(),
       },
     ];
@@ -273,12 +212,10 @@ describe('Push Notifications Service', () => {
         url: '/accounts',
       },
       sendWebPush,
-      sendExpoPush,
       deleteSub,
     );
 
-    expect(sendWebPush).toHaveBeenCalledTimes(1);
-    expect(sendExpoPush).toHaveBeenCalledTimes(1);
+    expect(sendWebPush).toHaveBeenCalledTimes(2);
     expect(deleteSub).not.toHaveBeenCalled();
   });
 });

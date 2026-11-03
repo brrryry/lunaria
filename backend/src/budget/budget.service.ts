@@ -5,9 +5,10 @@ import {
   categoryBudgets,
   transactions,
   categories,
+  userCategoryExclusions,
   accounts,
 } from '@lunaria/db';
-import { and, eq, gte, lte, gt, desc, sql } from 'drizzle-orm';
+import { and, eq, gte, lte, gt, desc, sql, or, isNull } from 'drizzle-orm';
 
 import {
   MonthlyBudgetSummary,
@@ -201,10 +202,39 @@ export class BudgetService {
       }
     }
 
+    // 3b. Fetch user's custom categories and excluded system categories
+    const allUserAndSystemCategories = await this.db
+      .select()
+      .from(categories)
+      .where(or(isNull(categories.userId), eq(categories.userId, userId)));
+
+    const exclusions = await this.db
+      .select()
+      .from(userCategoryExclusions)
+      .where(eq(userCategoryExclusions.userId, userId));
+
+    const excludedCategoryIds = new Set(exclusions.map((e) => e.categoryId));
+    const excludedSystemNamesLower = new Set(
+      allUserAndSystemCategories
+        .filter((c) => c.isSystem && excludedCategoryIds.has(c.id))
+        .map((c) => c.name.toLowerCase()),
+    );
+    const activeCustomCategories = allUserAndSystemCategories.filter(
+      (c) => !c.isSystem && c.userId === userId,
+    );
+
     // 4. Build Income Categories List
     const incomeCatNames = new Set<string>();
-    // Default categories
-    DEFAULT_INCOME_CATEGORIES.forEach((c) => incomeCatNames.add(c));
+    // Default categories (excluding ones hidden by user)
+    DEFAULT_INCOME_CATEGORIES.forEach((c) => {
+      if (!excludedSystemNamesLower.has(c.toLowerCase())) {
+        incomeCatNames.add(c);
+      }
+    });
+    // User custom income categories
+    activeCustomCategories
+      .filter((c) => c.group.toLowerCase() === 'income')
+      .forEach((c) => incomeCatNames.add(c.name));
     // Saved budgets
     savedBudgets
       .filter((b) => b.type === 'income')
@@ -248,7 +278,15 @@ export class BudgetService {
 
     // 5. Build Expense Categories List
     const expenseCatNames = new Set<string>();
-    DEFAULT_EXPENSE_CATEGORIES.forEach((c) => expenseCatNames.add(c));
+    DEFAULT_EXPENSE_CATEGORIES.forEach((c) => {
+      if (!excludedSystemNamesLower.has(c.toLowerCase())) {
+        expenseCatNames.add(c);
+      }
+    });
+    // User custom expense categories
+    activeCustomCategories
+      .filter((c) => c.group.toLowerCase() !== 'income')
+      .forEach((c) => expenseCatNames.add(c.name));
     savedBudgets
       .filter((b) => b.type === 'expense')
       .forEach((b) => expenseCatNames.add(b.category));

@@ -685,8 +685,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onRefreshData, trans
                     <Smartphone className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-xs font-semibold text-white">Phone & Push</div>
-                    <div className="text-[11px] text-slate-400">Mobile & web alerts</div>
+                    <div className="text-xs font-semibold text-white">Browser Push</div>
+                    <div className="text-[11px] text-slate-400">Web push alerts</div>
                   </div>
                 </div>
                 <button
@@ -755,7 +755,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onRefreshData, trans
                     ? 'This browser will receive native OS notifications (RFC 8291 VAPID) even when Lunaria is closed.'
                     : pushPermission === 'denied'
                     ? 'Notifications are blocked in your browser site permissions. Click the lock icon in your address bar to re-enable.'
-                    : 'Subscribe this device via Web Push API to receive instant OS desktop & mobile push alerts.'}
+                    : 'Subscribe this device via Web Push API to receive instant OS desktop & browser push alerts.'}
                 </p>
                 {pushErrorMessage && (
                   <p className="text-[11px] text-rose-400 font-medium">{pushErrorMessage}</p>
