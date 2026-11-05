@@ -42,6 +42,7 @@ import { EncryptionService } from '../common/encryption.service.js';
 import { AuthService } from '../auth/auth.service.js';
 import { StocksService } from '../stocks/stocks.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
+import { reconcilePendingTransactionsInDb } from '../transactions/transactions.service.js';
 import * as crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 
@@ -727,26 +728,34 @@ export class PlaidService {
         cursor = next_cursor;
 
         // Remove any deleted or superseded pending transactions reported by Plaid
-        if (removed && removed.length > 0) {
-          const removedIds = removed
-            .map((r) => r.transaction_id)
-            .filter((id): id is string => Boolean(id));
-          if (removedIds.length > 0) {
-            await this.db
-              .delete(transactions)
-              .where(
-                and(
-                  eq(transactions.userId, userId),
-                  inArray(transactions.plaidTransactionId, removedIds),
-                ),
-              );
-          }
+        const removedIds = (removed || [])
+          .map((r) => r.transaction_id)
+          .filter((id): id is string => Boolean(id));
+
+        const pendingIdsToRemove = allTx
+          .map((tx: any) => tx.pending_transaction_id)
+          .filter((id): id is string => Boolean(id));
+
+        const idsToDelete = Array.from(new Set([...removedIds, ...pendingIdsToRemove]));
+        if (idsToDelete.length > 0) {
+          await this.db
+            .delete(transactions)
+            .where(
+              and(
+                eq(transactions.userId, userId),
+                inArray(transactions.plaidTransactionId, idsToDelete),
+              ),
+            );
         }
+
+        // Filter out any superseded pending transactions from allTx before inserting
+        const supersededIdSet = new Set(pendingIdsToRemove);
+        const txToProcess = allTx.filter((tx) => !supersededIdSet.has(tx.transaction_id));
 
         // Process transactions in concurrent batches for high-throughput insertion
         const BATCH_SIZE = 25;
-        for (let i = 0; i < allTx.length; i += BATCH_SIZE) {
-          const batch = allTx.slice(i, i + BATCH_SIZE);
+        for (let i = 0; i < txToProcess.length; i += BATCH_SIZE) {
+          const batch = txToProcess.slice(i, i + BATCH_SIZE);
           await Promise.all(
             batch.map(async (tx) => {
               const accountDbId = accountMap.get(tx.account_id);
@@ -812,6 +821,13 @@ export class PlaidService {
         }
 
         totalAdded += allTx.length;
+      }
+
+      // Reconcile and prune any lingering/duplicate pending transactions
+      try {
+        await reconcilePendingTransactionsInDb(this.db, userId);
+      } catch (recErr: any) {
+        this.logger.warn(`Post-sync duplicate reconciliation notice: ${recErr?.message || recErr}`);
       }
 
       // Update cursor
@@ -884,6 +900,7 @@ export class PlaidService {
           await this.syncTransactions(item.id, accessToken, item.userId);
           await this.syncInvestmentHoldings(item.id, accessToken, item.userId);
           await this.syncInvestmentTransactions(item.id, accessToken, item.userId);
+          await reconcilePendingTransactionsInDb(this.db, item.userId);
           this.logger.log(
             `Cron synced item ${item.id} (${item.institutionName || 'Financial Institution'}) for user ${item.userId}`,
           );

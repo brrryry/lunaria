@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Delete, Param, Body, Query, Headers } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query, Headers } from '@nestjs/common';
 import { TransactionsService } from './transactions.service.js';
 import { AuthService } from '../auth/auth.service.js';
 
@@ -8,6 +8,16 @@ export class TransactionsController {
     private readonly transactionsService: TransactionsService,
     private readonly authService: AuthService,
   ) {}
+
+  @Post('reconcile')
+  async reconcileTransactions(
+    @Query('userId') queryUserId?: string,
+    @Headers('x-user-id') headerUserId?: string,
+    @Headers('authorization') authHeader?: string,
+  ) {
+    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader);
+    return this.transactionsService.reconcilePendingTransactions(userId);
+  }
 
   @Get()
   async getTransactions(

@@ -18,6 +18,7 @@ import { SettingsView } from '@/components/views/SettingsView';
 import { LoginView } from '@/components/views/LoginView';
 import { PlaidConnectModal } from '@/components/PlaidConnectModal';
 import { AiCopilotDrawer } from '@/components/ai/AiCopilotDrawer';
+import { deduplicateTransactionsList } from '@/lib/transactions';
 import { User } from '@lunaria/types';
 import { Loader2 } from 'lucide-react';
 
@@ -131,7 +132,8 @@ export default function DashboardPage() {
 
       if (txRes.ok) {
         const txData = await txRes.json();
-        setTransactions(txData.items || []);
+        const rawItems = txData.items || [];
+        setTransactions(deduplicateTransactionsList(rawItems));
       }
     } catch (err) {
       console.warn('Backend API not yet reachable:', err);
