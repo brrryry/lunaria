@@ -229,10 +229,26 @@ export class AuthService {
     };
   }
 
+  extractToken(authHeader?: string, cookieHeader?: string): string | null {
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      return authHeader.substring(7).trim();
+    }
+    if (authHeader && authHeader.includes('lunaria_token=')) {
+      const match = authHeader.match(/(?:^|;\s*)lunaria_token=([^;]+)/);
+      if (match) return decodeURIComponent(match[1].trim());
+    }
+    if (cookieHeader) {
+      const match = cookieHeader.match(/(?:^|;\s*)lunaria_token=([^;]+)/);
+      if (match) return decodeURIComponent(match[1].trim());
+    }
+    return null;
+  }
+
   async resolveUserId(
     providedUserId?: string,
     authHeader?: string,
     apiKeyHeader?: string,
+    cookieHeader?: string,
   ): Promise<string> {
     // 1. Agent API Key authentication (for OpenClaw / autonomous agent integration)
     const agentKey =
@@ -277,16 +293,16 @@ export class AuthService {
       }
     }
 
-    // 2. Try JWT Authorization Bearer header
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.substring(7).trim();
+    // 2. Try JWT Authorization Bearer header OR HttpOnly session cookie
+    const token = this.extractToken(authHeader, cookieHeader);
+    if (token) {
       try {
         const payload = this.verifyToken(token);
         if (payload?.sub) {
           return payload.sub;
         }
       } catch (err: any) {
-        this.logger.warn(`Failed to verify Bearer token: ${err?.message || err}`);
+        this.logger.warn(`Failed to verify token: ${err?.message || err}`);
       }
     }
 

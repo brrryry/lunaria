@@ -24,10 +24,13 @@ export class BudgetController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
     const userId = await this.authService.resolveUserId(
       queryUserId || headerUserId,
       authHeader,
+      undefined,
+      cookieHeader,
     );
     return this.budgetService.getMonthlyBudget(userId, month);
   }
@@ -38,10 +41,13 @@ export class BudgetController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
     const userId = await this.authService.resolveUserId(
       queryUserId || headerUserId,
       authHeader,
+      undefined,
+      cookieHeader,
     );
     return this.budgetService.upsertBudget(userId, dto);
   }
@@ -52,10 +58,13 @@ export class BudgetController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
     const userId = await this.authService.resolveUserId(
       queryUserId || headerUserId,
       authHeader,
+      undefined,
+      cookieHeader,
     );
     return this.budgetService.copyPreviousMonth(userId, body.month);
   }

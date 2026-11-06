@@ -25,8 +25,9 @@ export class CategoriesController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
-    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader);
+    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader, undefined, cookieHeader);
     return this.categoriesService.getCategories(userId);
   }
 
@@ -35,8 +36,9 @@ export class CategoriesController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
-    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader);
+    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader, undefined, cookieHeader);
     return this.categoriesService.getExcludedCategories(userId);
   }
 
@@ -46,8 +48,9 @@ export class CategoriesController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
-    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader);
+    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader, undefined, cookieHeader);
     return this.categoriesService.createCategory(userId, dto);
   }
 
@@ -58,8 +61,9 @@ export class CategoriesController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
-    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader);
+    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader, undefined, cookieHeader);
     return this.categoriesService.updateCategory(userId, id, dto);
   }
 
@@ -70,8 +74,9 @@ export class CategoriesController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
-    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader);
+    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader, undefined, cookieHeader);
     return this.categoriesService.deleteCategory(userId, id, reassignTo);
   }
 
@@ -80,8 +85,9 @@ export class CategoriesController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
-    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader);
+    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader, undefined, cookieHeader);
     return this.categoriesService.restoreDefaultCategories(userId);
   }
 
@@ -91,8 +97,9 @@ export class CategoriesController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
-    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader);
+    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader, undefined, cookieHeader);
     return this.categoriesService.restoreSingleCategory(userId, id);
   }
 
@@ -101,8 +108,9 @@ export class CategoriesController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
-    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader);
+    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader, undefined, cookieHeader);
     return this.categoriesService.getCategoryRules(userId);
   }
 
@@ -112,8 +120,9 @@ export class CategoriesController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
-    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader);
+    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader, undefined, cookieHeader);
     return this.categoriesService.deleteCategoryRule(userId, ruleId);
   }
 }

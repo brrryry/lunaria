@@ -1,6 +1,6 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { eq, and, desc, sql, gte, lte } from 'drizzle-orm';
+import { eq, and, or, desc, sql, gte, lte } from 'drizzle-orm';
 import { Resend } from 'resend';
 import { DATABASE_TOKEN } from '../database/database.module.js';
 import { PushService } from './push.service.js';
@@ -604,6 +604,7 @@ export class NotificationsService {
     userId: string,
     tx: {
       plaidTransactionId?: string;
+      pendingTransactionId?: string;
       id?: string;
       amount: number | string;
       name: string;
@@ -625,6 +626,7 @@ export class NotificationsService {
     const prefs = await this.getPreferences(userId);
     const txKeyIdentifier =
       tx.plaidTransactionId || tx.id || `${tx.date}-${tx.amount}-${tx.name}`;
+    const pendingKeyIdentifier = tx.pendingTransactionId;
 
     // 1. Check deposit alert (in Plaid/accounting, negative amount is an inflow/credit)
     if (numAmount < 0 && prefs.depositAlert) {
@@ -632,15 +634,27 @@ export class NotificationsService {
       const absAmount = Math.abs(numAmount);
       if (absAmount >= minDeposit) {
         const metaKey = `deposit-alert-${txKeyIdentifier}`;
+        const pendingMetaKey = pendingKeyIdentifier
+          ? `deposit-alert-${pendingKeyIdentifier}`
+          : null;
+
+        const condition = pendingMetaKey
+          ? and(
+              eq(notifications.userId, userId),
+              or(
+                sql`${notifications.metadata}->>'txKey' = ${metaKey}`,
+                sql`${notifications.metadata}->>'txKey' = ${pendingMetaKey}`,
+              ),
+            )
+          : and(
+              eq(notifications.userId, userId),
+              sql`${notifications.metadata}->>'txKey' = ${metaKey}`,
+            );
+
         const [exists] = await this.db
           .select()
           .from(notifications)
-          .where(
-            and(
-              eq(notifications.userId, userId),
-              sql`${notifications.metadata}->>'txKey' = ${metaKey}`,
-            ),
-          )
+          .where(condition)
           .limit(1);
 
         if (!exists) {
@@ -660,15 +674,27 @@ export class NotificationsService {
       const minExpense = Number(prefs.expenseMinAmount) || 500;
       if (numAmount >= minExpense) {
         const metaKey = `expense-alert-${txKeyIdentifier}`;
+        const pendingMetaKey = pendingKeyIdentifier
+          ? `expense-alert-${pendingKeyIdentifier}`
+          : null;
+
+        const condition = pendingMetaKey
+          ? and(
+              eq(notifications.userId, userId),
+              or(
+                sql`${notifications.metadata}->>'txKey' = ${metaKey}`,
+                sql`${notifications.metadata}->>'txKey' = ${pendingMetaKey}`,
+              ),
+            )
+          : and(
+              eq(notifications.userId, userId),
+              sql`${notifications.metadata}->>'txKey' = ${metaKey}`,
+            );
+
         const [exists] = await this.db
           .select()
           .from(notifications)
-          .where(
-            and(
-              eq(notifications.userId, userId),
-              sql`${notifications.metadata}->>'txKey' = ${metaKey}`,
-            ),
-          )
+          .where(condition)
           .limit(1);
 
         if (!exists) {

@@ -111,6 +111,19 @@ describe('Authentication & JWT Session Engine', () => {
     expect(resolvedId).toBe(mockUser.id);
   });
 
+  it('extracts token and resolves user ID from cookie string', () => {
+    const token = createJwtToken(mockUser);
+    const cookieHeader = `other_cookie=xyz; lunaria_token=${token}; secure=true`;
+
+    const match = cookieHeader.match(/(?:^|;\s*)lunaria_token=([^;]+)/);
+    expect(match).not.toBeNull();
+    const extractedToken = decodeURIComponent(match![1]);
+    expect(extractedToken).toBe(token);
+
+    const payload = verifyJwtToken(extractedToken);
+    expect(payload?.sub).toBe(mockUser.id);
+  });
+
   it('falls back to default user ID when no authorization header is supplied', () => {
     const resolvedId = resolveUserIdFromHeader(undefined, 'demo-user-id');
     expect(resolvedId).toBe('demo-user-id');

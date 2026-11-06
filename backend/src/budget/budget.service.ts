@@ -16,6 +16,7 @@ import {
   UpdateBudgetDto,
 } from '@lunaria/types';
 import { DATABASE_TOKEN } from '../database/database.module.js';
+import { reconcilePendingTransactionsInDb } from '../transactions/transactions.service.js';
 
 const DEFAULT_INCOME_CATEGORIES = [
   'Income',
@@ -101,6 +102,12 @@ export class BudgetService {
     userId: string,
     month?: string,
   ): Promise<MonthlyBudgetSummary> {
+    try {
+      await reconcilePendingTransactionsInDb(this.db, userId);
+    } catch {
+      // Non-blocking fallback
+    }
+
     const activeMonth =
       month && /^\d{4}-\d{2}$/.test(month)
         ? month

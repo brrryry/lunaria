@@ -38,12 +38,15 @@ export class AiController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
     let userId: string;
     try {
       userId = await this.authService.resolveUserId(
         queryUserId || headerUserId,
         authHeader,
+        undefined,
+        cookieHeader,
       );
     } catch {
       return res.status(HttpStatus.UNAUTHORIZED).json({

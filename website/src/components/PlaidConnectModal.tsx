@@ -501,7 +501,7 @@ export const PlaidConnectModal: React.FC<PlaidConnectModalProps> = ({
               <button
                 disabled={!ready || isLoadingToken}
                 onClick={() => open()}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 shadow-lg shadow-purple-500/25 transition-all disabled:opacity-50 active:scale-98 cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm btn-gradient-brand disabled:opacity-50 active:scale-98 cursor-pointer"
               >
 
                 {isLoadingToken ? (

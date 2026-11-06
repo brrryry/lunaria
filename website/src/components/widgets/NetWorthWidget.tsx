@@ -344,8 +344,8 @@ const formatAxisMetric = (val: number): string => {
               >
                 <defs>
                   <linearGradient id="nwGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#cb6de6" stopOpacity="0.32" />
-                    <stop offset="100%" stopColor="#cb6de6" stopOpacity="0.0" />
+                    <stop offset="0%" stopColor="var(--gradient-accent, #cb6de6)" stopOpacity="0.32" />
+                    <stop offset="100%" stopColor="var(--gradient-accent, #cb6de6)" stopOpacity="0.0" />
                   </linearGradient>
                 </defs>
 
@@ -371,7 +371,7 @@ const formatAxisMetric = (val: number): string => {
                 <path
                   d={svgGeometry.linePath}
                   fill="none"
-                  stroke="#c084fc"
+                  stroke="var(--gradient-via, #c084fc)"
                   strokeWidth="2.5"
                   strokeLinecap="round"
                 />

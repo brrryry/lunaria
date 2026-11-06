@@ -414,11 +414,11 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={onOpenCopilot}
             aria-label="Open Lunaria Copilot"
             title="Open Lunaria Copilot (⌘K)"
-            className="h-9 px-3 rounded-xl flex items-center gap-1.5 text-xs font-semibold bg-gradient-to-r from-purple-500/10 to-indigo-500/10 hover:from-purple-500/20 hover:to-indigo-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30 transition-all shadow-sm group"
+            className="h-9 px-3 rounded-xl flex items-center gap-1.5 text-xs font-semibold bg-gradient-brand-subtle hover:brightness-105 text-[var(--brand-active-text)] border border-[var(--brand-active-border)] transition-all shadow-sm group"
           >
-            <Sparkles className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 group-hover:rotate-12 transition-transform" />
+            <Sparkles className="w-3.5 h-3.5 text-[var(--gradient-accent)] group-hover:rotate-12 transition-transform" />
             <span className="hidden sm:inline">Copilot</span>
-            <span className="hidden md:inline-flex px-1.5 py-0.5 rounded text-[10px] font-mono bg-purple-500/20 text-purple-600 dark:text-purple-300 font-medium">
+            <span className="hidden md:inline-flex px-1.5 py-0.5 rounded text-[10px] font-mono bg-black/10 dark:bg-white/10 text-[var(--brand-active-text)] font-medium">
               ⌘K
             </span>
           </button>
@@ -579,7 +579,7 @@ export const Header: React.FC<HeaderProps> = ({
               setDropdownOpen(!dropdownOpen);
               setNotificationsOpen(false);
             }}
-            className="w-9 h-9 rounded-xl overflow-hidden bg-gradient-to-tr from-purple-600 via-fuchsia-500 to-violet-600 flex items-center justify-center text-xs font-bold text-white border border-slate-300 dark:border-slate-700 shadow-sm transition-transform active:scale-95 focus:outline-none ring-2 ring-transparent focus:ring-purple-500/50"
+            className="w-9 h-9 rounded-xl overflow-hidden bg-gradient-brand flex items-center justify-center text-xs font-bold text-white border border-slate-300 dark:border-slate-700 shadow-sm transition-transform active:scale-95 focus:outline-none ring-2 ring-transparent focus:ring-purple-500/50"
           >
             {user?.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element

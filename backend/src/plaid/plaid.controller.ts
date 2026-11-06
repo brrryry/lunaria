@@ -26,10 +26,13 @@ export class PlaidController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
     const userId = await this.authService.resolveUserId(
       bodyUserId || queryUserId || headerUserId,
       authHeader,
+      undefined,
+      cookieHeader,
     );
     return this.plaidService.createLinkToken(userId);
   }
@@ -41,10 +44,13 @@ export class PlaidController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
     const userId = await this.authService.resolveUserId(
       bodyUserId || queryUserId || headerUserId,
       authHeader,
+      undefined,
+      cookieHeader,
     );
     return this.plaidService.createUpdateLinkToken(userId, itemId);
   }
@@ -56,10 +62,13 @@ export class PlaidController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
     const userId = await this.authService.resolveUserId(
       bodyUserId || queryUserId || headerUserId,
       authHeader,
+      undefined,
+      cookieHeader,
     );
     return this.plaidService.resolveUpdateModeSuccess(userId, itemId);
   }
@@ -83,10 +92,13 @@ export class PlaidController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
     const userId = await this.authService.resolveUserId(
       bodyUserId || queryUserId || headerUserId,
       authHeader,
+      undefined,
+      cookieHeader,
     );
     return this.plaidService.exchangePublicToken(
       userId,
@@ -100,10 +112,13 @@ export class PlaidController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
     const userId = await this.authService.resolveUserId(
       queryUserId || headerUserId,
       authHeader,
+      undefined,
+      cookieHeader,
     );
     return this.plaidService.getItems(userId);
   }
@@ -114,10 +129,13 @@ export class PlaidController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
     const userId = await this.authService.resolveUserId(
       queryUserId || headerUserId,
       authHeader,
+      undefined,
+      cookieHeader,
     );
     return this.plaidService.removeItem(id, userId);
   }
@@ -127,10 +145,13 @@ export class PlaidController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
     const userId = await this.authService.resolveUserId(
       queryUserId || headerUserId,
       authHeader,
+      undefined,
+      cookieHeader,
     );
     return this.plaidService.syncAllItems(userId);
   }
@@ -153,10 +174,13 @@ export class PlaidController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
     const userId = await this.authService.resolveUserId(
       queryUserId || headerUserId,
       authHeader,
+      undefined,
+      cookieHeader,
     );
     return this.plaidService.getRecurringTransactions(userId);
   }
@@ -169,10 +193,13 @@ export class PlaidController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
     const userId = await this.authService.resolveUserId(
       bodyUserId || queryUserId || headerUserId,
       authHeader,
+      undefined,
+      cookieHeader,
     );
     if (!streamId) {
       throw new BadRequestException('streamId is required');
@@ -187,10 +214,13 @@ export class PlaidController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
     const userId = await this.authService.resolveUserId(
       bodyUserId || queryUserId || headerUserId,
       authHeader,
+      undefined,
+      cookieHeader,
     );
     if (!streamId) {
       throw new BadRequestException('streamId is required');

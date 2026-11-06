@@ -802,6 +802,7 @@ export class PlaidService {
             try {
               await this.notificationsService.handleNewTransaction(userId, {
                 plaidTransactionId: tx.transaction_id,
+                pendingTransactionId: (tx as any).pending_transaction_id,
                 amount: tx.amount,
                 name: tx.name,
                 merchantName: tx.merchant_name,
@@ -1588,15 +1589,17 @@ export class PlaidService {
         if (knownMerchantKeys.has(cleanNameLower)) continue;
         if (g.dates.length < 2) continue;
 
-        // Calculate intervals between sorted consecutive dates
-        const sortedDates = [...g.dates]
-          .map((d) => new Date(d).getTime())
-          .sort((a, b) => b - a);
+        // Calculate intervals between sorted unique consecutive dates
+        const uniqueDayTimestamps = Array.from(
+          new Set(g.dates.map((d) => new Date(d).setHours(0, 0, 0, 0))),
+        ).sort((a, b) => b - a);
+
+        if (uniqueDayTimestamps.length < 2) continue;
 
         const intervals: number[] = [];
-        for (let i = 0; i < sortedDates.length - 1; i++) {
+        for (let i = 0; i < uniqueDayTimestamps.length - 1; i++) {
           const diffDays = Math.round(
-            (sortedDates[i] - sortedDates[i + 1]) / (1000 * 60 * 60 * 24),
+            (uniqueDayTimestamps[i] - uniqueDayTimestamps[i + 1]) / (1000 * 60 * 60 * 24),
           );
           if (diffDays > 0) {
             intervals.push(diffDays);
