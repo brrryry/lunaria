@@ -1,0 +1,16 @@
+# Auto-detect text files and normalize to LF in Git
+* text=auto eol=lf
+
+# Explicitly enforce LF for scripts, Docker, and environment files
+*.sh text eol=lf
+*.bash text eol=lf
+*.zsh text eol=lf
+Dockerfile* text eol=lf
+docker-compose*.yml text eol=lf
+.env* text eol=lf
+*.json text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.cjs text eol=lf

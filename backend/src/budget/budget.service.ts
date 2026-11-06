@@ -96,6 +96,66 @@ export class BudgetService {
     return result;
   }
 
+  /**
+   * Identifies transfers and credit card payments so they are excluded from monthly budgets.
+   */
+  private isTransferOrCreditCardPayment(tx: {
+    category?: string | null;
+    subCategory?: string | null;
+    name?: string | null;
+    merchantName?: string | null;
+  }): boolean {
+    if (!tx) return false;
+
+    const cat = (tx.category || '').toLowerCase();
+    const sub = (tx.subCategory || '').toLowerCase();
+    const name = (tx.name || '').toLowerCase();
+    const merchant = (tx.merchantName || '').toLowerCase();
+
+    // 1. Category heuristics
+    if (
+      cat === 'transfer' ||
+      cat === 'payment' ||
+      cat.includes('transfer') ||
+      cat.includes('credit card') ||
+      cat.includes('loan payment') ||
+      sub.includes('transfer') ||
+      sub.includes('credit card')
+    ) {
+      return true;
+    }
+
+    // 2. Transaction name & merchant name heuristics
+    const transferKeywords = [
+      'credit card payment',
+      'payment thank you',
+      'autopay',
+      'online payment',
+      'epayment',
+      'card payment',
+      'citi card online payment',
+      'chase credit crd',
+      'amex epayment',
+      'discover e-payment',
+      'capital one payment',
+      'bank transfer',
+      'account transfer',
+      'funds transfer',
+      'internal transfer',
+      'wire transfer',
+      'ach transfer',
+      'bill pay',
+    ];
+
+    for (const kw of transferKeywords) {
+      if (name.includes(kw) || merchant.includes(kw)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   async getMonthlyBudget(
     userId: string,
     month?: string,
@@ -157,6 +217,9 @@ export class BudgetService {
       .select({
         amount: transactions.amount,
         category: transactions.category,
+        subCategory: transactions.subCategory,
+        name: transactions.name,
+        merchantName: transactions.merchantName,
       })
       .from(transactions)
       .innerJoin(accounts, eq(transactions.accountId, accounts.id))
@@ -180,20 +243,17 @@ export class BudgetService {
       const cat = tx.category || 'General';
       const catKey = cat.toLowerCase();
 
+      // Exclude transfers and credit card payments to prevent double counting
+      if (this.isTransferOrCreditCardPayment(tx)) {
+        continue;
+      }
+
       if (amt < 0) {
-        // Income (exclude credit card statement credits or internal transfers tagged as Payment/Transfer)
-        if (catKey === 'transfer' || catKey === 'payment') {
-          continue;
-        }
         actualIncomeMap.set(
           catKey,
           (actualIncomeMap.get(catKey) || 0) + Math.abs(amt),
         );
       } else {
-        // Expense (exclude internal transfers and debt payments from consumer living expense budgets)
-        if (catKey === 'transfer' || catKey === 'payment') {
-          continue;
-        }
         actualExpenseMap.set(
           catKey,
           (actualExpenseMap.get(catKey) || 0) + amt,
@@ -215,13 +275,7 @@ export class BudgetService {
       .forEach((b) => incomeCatNames.add(b.category));
     // Actuals from transactions
     for (const tx of monthTransactions) {
-      const catLower = (tx.category || '').toLowerCase();
-      if (
-        Number(tx.amount) < 0 &&
-        tx.category &&
-        catLower !== 'transfer' &&
-        catLower !== 'payment'
-      ) {
+      if (Number(tx.amount) < 0 && tx.category && !this.isTransferOrCreditCardPayment(tx)) {
         incomeCatNames.add(tx.category);
       }
     }
@@ -257,13 +311,11 @@ export class BudgetService {
       .forEach((b) => expenseCatNames.add(b.category));
 
     for (const tx of monthTransactions) {
-      const catLower = (tx.category || '').toLowerCase();
       if (
         Number(tx.amount) >= 0 &&
         tx.category &&
         tx.category !== 'Income' &&
-        catLower !== 'transfer' &&
-        catLower !== 'payment'
+        !this.isTransferOrCreditCardPayment(tx)
       ) {
         expenseCatNames.add(tx.category);
       }

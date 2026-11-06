@@ -70,7 +70,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 SSH_OPTS=(-p "${NAS_PORT}" -o StrictHostKeyChecking=no)
 if [ -n "${SSH_KEY}" ] && [ -f "${SSH_KEY}" ]; then
-  SSH_OPTS+=(-i "${SSH_KEY}")
+  SSH_OPTS+=(-i "${SSH_KEY}" -o IdentitiesOnly=yes)
 fi
 
 echo "========================================================"
@@ -85,7 +85,7 @@ echo "========================================================"
 # 1. Connectivity Check
 # ------------------------------------------------------------------------------
 echo "📡 Testing SSH connectivity to ${NAS_USER}@${NAS_HOST}..."
-if ! ssh "${SSH_OPTS[@]}" -o BatchMode=yes -o ConnectTimeout=5 "${NAS_USER}@${NAS_HOST}" "echo 'Connected as \$(whoami)'"; then
+if ! ssh "${SSH_OPTS[@]}" -o BatchMode=yes -o ConnectTimeout=5 "${NAS_USER}@${NAS_HOST}" 'echo "Connected as $(whoami)"'; then
   echo "❌ Error: Could not connect to ${NAS_USER}@${NAS_HOST}."
   exit 1
 fi
