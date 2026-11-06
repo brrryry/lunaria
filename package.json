@@ -18,9 +18,7 @@
     "db:seed": "pnpm --filter @lunaria/db db:seed",
     "seed": "pnpm --filter @lunaria/db db:seed",
     "db:clear": "pnpm --filter @lunaria/db db:clear",
-    "clear": "pnpm --filter @lunaria/db db:clear",
-    "mobile": "pnpm --filter @lunaria/mobile dev",
-    "mobile:web": "pnpm --filter @lunaria/mobile web"
+    "clear": "pnpm --filter @lunaria/db db:clear"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.10",

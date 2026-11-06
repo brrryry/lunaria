@@ -12,6 +12,7 @@ import {
   Clock,
   RotateCcw,
   ArrowLeftRight,
+  X,
 } from 'lucide-react';
 import { isTransferOrCreditCardPayment } from '@/lib/transactions';
 import { CategoryPickerModal } from '../CategoryPickerModal';
@@ -169,11 +170,11 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
   ]);
 
   const totalSpent = filtered
-    .filter((t) => Number(t.amount) > 0)
+    .filter((t) => Number(t.amount) > 0 && !isTransferOrCreditCardPayment(t))
     .reduce((sum, t) => sum + Number(t.amount), 0);
 
   const totalIncome = filtered
-    .filter((t) => Number(t.amount) < 0)
+    .filter((t) => Number(t.amount) < 0 && !isTransferOrCreditCardPayment(t))
     .reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
 
   const handleSelectCategory = async (
@@ -232,7 +233,8 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
     searchTerm !== '' ||
     selectedCategory !== 'all' ||
     selectedAccount !== 'all' ||
-    dateFilter !== 'all';
+    dateFilter !== 'all' ||
+    needsReviewOnly;
 
   const resetFilters = () => {
     setSearchTerm('');
@@ -297,27 +299,37 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
       <div className="glass-panel rounded-2xl p-3 sm:p-4 space-y-3 min-w-0 max-w-full overflow-hidden">
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
           {/* Search */}
-          <div className="relative flex-1 min-w-0">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <div className="relative flex-1 min-w-[240px] lg:min-w-[300px]">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search merchant, store, or description..."
-              className="w-full bg-white dark:bg-[#0f1422] border border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all shadow-sm"
+              className="w-full bg-white dark:bg-[#0f1422] border border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 rounded-xl pl-10 pr-9 py-2.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all shadow-sm"
             />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                aria-label="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
-          {/* Filter Dropdowns Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center min-w-0 w-full lg:w-auto">
+          {/* Filter Dropdowns */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:flex lg:items-center gap-2 min-w-0 w-full lg:w-auto lg:shrink-0">
             {/* Date Range Preset Filter */}
-            <div className="flex items-center justify-between gap-1.5 px-3 py-2 bg-white dark:bg-[#0f1422] hover:bg-slate-50 dark:hover:bg-[#13192b] border border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 rounded-xl text-xs text-slate-800 dark:text-slate-200 min-w-0 shadow-sm transition-all group">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div className="flex items-center justify-between gap-1.5 px-3 py-2.5 bg-white dark:bg-[#0f1422] hover:bg-slate-50 dark:hover:bg-[#13192b] border border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 rounded-xl text-xs text-slate-800 dark:text-slate-200 min-w-0 lg:w-36 xl:w-40 shadow-sm transition-all group">
+              <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
                 <Clock className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 shrink-0" />
                 <select
                   value={dateFilter}
                   onChange={(e) => setDateFilter(e.target.value as DateFilterOption)}
-                  className="bg-transparent focus:outline-none text-slate-800 dark:text-slate-100 font-medium cursor-pointer text-xs w-full min-w-0 truncate pr-1"
+                  className="appearance-none bg-transparent focus:outline-none text-slate-800 dark:text-slate-100 font-medium cursor-pointer text-xs w-full min-w-0 truncate pr-1"
                 >
                   <option value="all" className="bg-white dark:bg-[#0f1422] text-slate-900 dark:text-slate-100 py-1.5">All Time</option>
                   <option value="7d" className="bg-white dark:bg-[#0f1422] text-slate-900 dark:text-slate-100 py-1.5">Last 7 Days</option>
@@ -331,13 +343,13 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
             </div>
 
             {/* Category Filter */}
-            <div className="flex items-center justify-between gap-1.5 px-3 py-2 bg-white dark:bg-[#0f1422] hover:bg-slate-50 dark:hover:bg-[#13192b] border border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 rounded-xl text-xs text-slate-800 dark:text-slate-200 min-w-0 shadow-sm transition-all group">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div className="flex items-center justify-between gap-1.5 px-3 py-2.5 bg-white dark:bg-[#0f1422] hover:bg-slate-50 dark:hover:bg-[#13192b] border border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 rounded-xl text-xs text-slate-800 dark:text-slate-200 min-w-0 lg:w-44 xl:w-48 shadow-sm transition-all group">
+              <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
                 <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="bg-transparent focus:outline-none text-slate-800 dark:text-slate-100 font-medium cursor-pointer text-xs w-full min-w-0 truncate pr-1"
+                  className="appearance-none bg-transparent focus:outline-none text-slate-800 dark:text-slate-100 font-medium cursor-pointer text-xs w-full min-w-0 truncate pr-1"
                 >
                   <option value="all" className="bg-white dark:bg-[#0f1422] text-slate-900 dark:text-slate-100 py-1.5">All Categories ({categories.length})</option>
                   {categories.map((c) => (
@@ -352,13 +364,13 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
 
             {/* Account Filter */}
             {accounts.length > 0 ? (
-              <div className="flex items-center justify-between gap-1.5 px-3 py-2 bg-white dark:bg-[#0f1422] hover:bg-slate-50 dark:hover:bg-[#13192b] border border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 rounded-xl text-xs text-slate-800 dark:text-slate-200 min-w-0 shadow-sm transition-all group">
-                <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-1.5 px-3 py-2.5 bg-white dark:bg-[#0f1422] hover:bg-slate-50 dark:hover:bg-[#13192b] border border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 rounded-xl text-xs text-slate-800 dark:text-slate-200 min-w-0 lg:w-48 xl:w-52 shadow-sm transition-all group">
+                <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
                   <Landmark className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                   <select
                     value={selectedAccount}
                     onChange={(e) => setSelectedAccount(e.target.value)}
-                    className="bg-transparent focus:outline-none text-slate-900 dark:text-slate-100 font-medium cursor-pointer text-xs w-full min-w-0 truncate pr-1"
+                    className="appearance-none bg-transparent focus:outline-none text-slate-900 dark:text-slate-100 font-medium cursor-pointer text-xs w-full min-w-0 truncate pr-1"
                   >
                     <option value="all" className="bg-white dark:bg-[#0f1422] text-slate-900 dark:text-slate-100 py-1.5">All Accounts ({accounts.length})</option>
                     {accounts.map((a) => (
@@ -378,7 +390,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
             <button
               type="button"
               onClick={resetFilters}
-              className="flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-[#0f1422] hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 transition-all shadow-sm self-start sm:self-auto shrink-0 cursor-pointer"
+              className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-[#0f1422] hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 transition-all shadow-sm self-start sm:self-auto shrink-0 cursor-pointer"
               title="Reset all filters"
             >
               <RotateCcw className="w-3.5 h-3.5" />

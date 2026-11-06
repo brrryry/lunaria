@@ -1,5 +1,12 @@
 import { Inject, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { LunariaDb, categories, userCategoryExclusions, categoryRules, transactions } from '@lunaria/db';
+import {
+  LunariaDb,
+  categories,
+  userCategoryExclusions,
+  categoryRules,
+  transactions,
+  categoryBudgets,
+} from '@lunaria/db';
 import { eq, or, isNull, and, desc, inArray } from 'drizzle-orm';
 import { DATABASE_TOKEN } from '../database/database.module.js';
 import type { CreateCategoryDto, UpdateCategoryDto } from '@lunaria/types';
@@ -187,6 +194,8 @@ export class CategoriesService {
             eq(categoryRules.category, oldName),
           ),
         );
+
+      await this.migrateCategoryBudgets(userId, oldName, targetCategoryName);
     }
 
     return {
@@ -303,9 +312,70 @@ export class CategoriesService {
             eq(categoryRules.category, oldName),
           ),
         );
+
+      await this.migrateCategoryBudgets(userId, oldName, newName);
     }
 
     return updated;
+  }
+
+  /**
+   * Safely migrates or removes categoryBudgets rows when a category is renamed or deleted.
+   */
+  private async migrateCategoryBudgets(
+    userId: string,
+    oldName: string,
+    newName: string,
+  ) {
+    if (oldName === newName) return;
+
+    if (newName === 'Uncategorized') {
+      await this.db
+        .delete(categoryBudgets)
+        .where(
+          and(
+            eq(categoryBudgets.userId, userId),
+            eq(categoryBudgets.category, oldName),
+          ),
+        );
+      return;
+    }
+
+    const oldBudgets = await this.db
+      .select()
+      .from(categoryBudgets)
+      .where(
+        and(
+          eq(categoryBudgets.userId, userId),
+          eq(categoryBudgets.category, oldName),
+        ),
+      );
+
+    for (const ob of oldBudgets) {
+      const [existingTarget] = await this.db
+        .select()
+        .from(categoryBudgets)
+        .where(
+          and(
+            eq(categoryBudgets.userId, userId),
+            eq(categoryBudgets.category, newName),
+            eq(categoryBudgets.month, ob.month),
+            eq(categoryBudgets.type, ob.type),
+          ),
+        )
+        .limit(1);
+
+      if (existingTarget) {
+        await this.db
+          .delete(categoryBudgets)
+          .where(eq(categoryBudgets.id, ob.id));
+      } else {
+        await this.db
+          .update(categoryBudgets)
+          .set({ category: newName, updatedAt: new Date() })
+          .where(eq(categoryBudgets.id, ob.id));
+      }
+    }
   }
 
   /**

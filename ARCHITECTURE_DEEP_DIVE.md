@@ -12,7 +12,6 @@ An exhaustive, per-service and per-function breakdown of the **Lunaria** financi
 ```
                                   ┌────────────────────────┐
                                   │   Next.js Web (3000)   │
-                                  │   Expo Mobile App      │
                                   └───────────┬────────────┘
                                               │ REST / JSON (JWT Bearer)
                                               ▼

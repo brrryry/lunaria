@@ -1,6 +1,6 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { eq, and, desc, sql, gte, lte } from 'drizzle-orm';
+import { eq, and, or, desc, sql, gte, lte } from 'drizzle-orm';
 import { Resend } from 'resend';
 import { DATABASE_TOKEN } from '../database/database.module.js';
 import { PushService } from './push.service.js';
@@ -421,6 +421,17 @@ export class NotificationsService {
         'http://localhost:3000'
       ).replace(/\/+$/, '');
 
+      const escapeHtml = (str: string) =>
+        str
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+
+      const safeTitle = escapeHtml(payload.title || '');
+      const safeMessage = escapeHtml(payload.message || '');
+
       if (recipient && resendKey && resendKey !== 're_your_api_key_here') {
         try {
           const resend = this.resendClient || new Resend(resendKey);
@@ -433,8 +444,8 @@ export class NotificationsService {
                 <div style="margin-bottom: 20px;">
                   <span style="font-size: 18px; font-weight: 800; color: #818cf8; letter-spacing: -0.5px;">LUNARIA</span>
                 </div>
-                <h2 style="font-size: 18px; font-weight: 700; color: #ffffff; margin: 0 0 12px 0;">${payload.title}</h2>
-                <p style="font-size: 14px; color: #8b949e; line-height: 1.6; margin: 0 0 20px 0;">${payload.message}</p>
+                <h2 style="font-size: 18px; font-weight: 700; color: #ffffff; margin: 0 0 12px 0;">${safeTitle}</h2>
+                <p style="font-size: 14px; color: #8b949e; line-height: 1.6; margin: 0 0 20px 0;">${safeMessage}</p>
                 <div style="padding-top: 16px; border-top: 1px solid #21262d; font-size: 11px; color: #8b949e; line-height: 1.5;">
                   <p style="margin: 0 0 6px 0;">You received this automated notification because you opted in to alerts on Lunaria.</p>
                   <p style="margin: 0;">To update your alert preferences or unsubscribe, visit your <a href="${appUrl}" style="color: #818cf8; text-decoration: underline;">Lunaria Settings</a>. View our <a href="${appUrl}/privacy" style="color: #818cf8; text-decoration: underline;">Privacy Policy</a>.</p>
@@ -535,6 +546,9 @@ export class NotificationsService {
         const amt = Number(tx.amount) || 0;
         if (amt > 0 && tx.category) {
           const catKey = tx.category.toLowerCase();
+          if (catKey === 'transfer' || catKey === 'payment') {
+            continue;
+          }
           actualSpentMap.set(catKey, (actualSpentMap.get(catKey) || 0) + amt);
         }
       }
@@ -590,6 +604,7 @@ export class NotificationsService {
     userId: string,
     tx: {
       plaidTransactionId?: string;
+      pendingTransactionId?: string;
       id?: string;
       amount: number | string;
       name: string;
@@ -611,6 +626,7 @@ export class NotificationsService {
     const prefs = await this.getPreferences(userId);
     const txKeyIdentifier =
       tx.plaidTransactionId || tx.id || `${tx.date}-${tx.amount}-${tx.name}`;
+    const pendingKeyIdentifier = tx.pendingTransactionId;
 
     // 1. Check deposit alert (in Plaid/accounting, negative amount is an inflow/credit)
     if (numAmount < 0 && prefs.depositAlert) {
@@ -618,15 +634,27 @@ export class NotificationsService {
       const absAmount = Math.abs(numAmount);
       if (absAmount >= minDeposit) {
         const metaKey = `deposit-alert-${txKeyIdentifier}`;
+        const pendingMetaKey = pendingKeyIdentifier
+          ? `deposit-alert-${pendingKeyIdentifier}`
+          : null;
+
+        const condition = pendingMetaKey
+          ? and(
+              eq(notifications.userId, userId),
+              or(
+                sql`${notifications.metadata}->>'txKey' = ${metaKey}`,
+                sql`${notifications.metadata}->>'txKey' = ${pendingMetaKey}`,
+              ),
+            )
+          : and(
+              eq(notifications.userId, userId),
+              sql`${notifications.metadata}->>'txKey' = ${metaKey}`,
+            );
+
         const [exists] = await this.db
           .select()
           .from(notifications)
-          .where(
-            and(
-              eq(notifications.userId, userId),
-              sql`${notifications.metadata}->>'txKey' = ${metaKey}`,
-            ),
-          )
+          .where(condition)
           .limit(1);
 
         if (!exists) {
@@ -646,15 +674,27 @@ export class NotificationsService {
       const minExpense = Number(prefs.expenseMinAmount) || 500;
       if (numAmount >= minExpense) {
         const metaKey = `expense-alert-${txKeyIdentifier}`;
+        const pendingMetaKey = pendingKeyIdentifier
+          ? `expense-alert-${pendingKeyIdentifier}`
+          : null;
+
+        const condition = pendingMetaKey
+          ? and(
+              eq(notifications.userId, userId),
+              or(
+                sql`${notifications.metadata}->>'txKey' = ${metaKey}`,
+                sql`${notifications.metadata}->>'txKey' = ${pendingMetaKey}`,
+              ),
+            )
+          : and(
+              eq(notifications.userId, userId),
+              sql`${notifications.metadata}->>'txKey' = ${metaKey}`,
+            );
+
         const [exists] = await this.db
           .select()
           .from(notifications)
-          .where(
-            and(
-              eq(notifications.userId, userId),
-              sql`${notifications.metadata}->>'txKey' = ${metaKey}`,
-            ),
-          )
+          .where(condition)
           .limit(1);
 
         if (!exists) {
@@ -684,7 +724,7 @@ export class NotificationsService {
           .where(
             and(
               eq(plaidItems.userId, userId),
-              eq(plaidItems.status, 'disconnected'),
+              sql`${plaidItems.status} IN ('disconnected', 'login_required')`,
             ),
           );
 

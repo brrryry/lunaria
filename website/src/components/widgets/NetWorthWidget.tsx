@@ -269,12 +269,19 @@ const formatAxisMetric = (val: number): string => {
 
         {/* Big Balance & Change */}
         <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
-          <div className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-            ${Math.floor(netWorth).toLocaleString()}
-            <span className="text-slate-400 dark:text-slate-500 text-lg sm:text-xl font-medium">
-              .{Math.abs(Math.round((netWorth % 1) * 100)).toString().padStart(2, '0')}
-            </span>
-          </div>
+          {(() => {
+            const totalCents = Math.round(Math.abs(netWorth) * 100);
+            const whole = Math.floor(totalCents / 100).toLocaleString();
+            const cents = (totalCents % 100).toString().padStart(2, '0');
+            return (
+              <div className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                {netWorth < 0 ? '-' : ''}${whole}
+                <span className="text-slate-400 dark:text-slate-500 text-lg sm:text-xl font-medium">
+                  .{cents}
+                </span>
+              </div>
+            );
+          })()}
 
           {hasAccounts && (
             <span
@@ -337,8 +344,8 @@ const formatAxisMetric = (val: number): string => {
               >
                 <defs>
                   <linearGradient id="nwGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#cb6de6" stopOpacity="0.32" />
-                    <stop offset="100%" stopColor="#cb6de6" stopOpacity="0.0" />
+                    <stop offset="0%" stopColor="var(--gradient-accent, #cb6de6)" stopOpacity="0.32" />
+                    <stop offset="100%" stopColor="var(--gradient-accent, #cb6de6)" stopOpacity="0.0" />
                   </linearGradient>
                 </defs>
 
@@ -364,7 +371,7 @@ const formatAxisMetric = (val: number): string => {
                 <path
                   d={svgGeometry.linePath}
                   fill="none"
-                  stroke="#c084fc"
+                  stroke="var(--gradient-via, #c084fc)"
                   strokeWidth="2.5"
                   strokeLinecap="round"
                 />

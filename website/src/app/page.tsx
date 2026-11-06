@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { Header } from '@/components/Header';
-import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { NetWorthWidget } from '@/components/widgets/NetWorthWidget';
 import { CashFlowWidget } from '@/components/widgets/CashFlowWidget';
 import { InvestmentGraphWidget } from '@/components/widgets/InvestmentGraphWidget';
@@ -18,6 +17,8 @@ import { AccountsView } from '@/components/views/AccountsView';
 import { SettingsView } from '@/components/views/SettingsView';
 import { LoginView } from '@/components/views/LoginView';
 import { PlaidConnectModal } from '@/components/PlaidConnectModal';
+import { AiCopilotDrawer } from '@/components/ai/AiCopilotDrawer';
+import { deduplicateTransactionsList } from '@/lib/transactions';
 import { User } from '@lunaria/types';
 import { Loader2 } from 'lucide-react';
 
@@ -39,7 +40,7 @@ export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const [activeTab, setActiveTab] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -75,6 +76,20 @@ export default function DashboardPage() {
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const [isCopilotOpen, setIsCopilotOpen] = useState(false);
+
+  // Global keyboard shortcut: Cmd+K / Ctrl+K opens AI Copilot
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCopilotOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   const [isPlaidModalOpen, setIsPlaidModalOpen] = useState(false);
@@ -117,7 +132,8 @@ export default function DashboardPage() {
 
       if (txRes.ok) {
         const txData = await txRes.json();
-        setTransactions(txData.items || []);
+        const rawItems = txData.items || [];
+        setTransactions(deduplicateTransactionsList(rawItems));
       }
     } catch (err) {
       console.warn('Backend API not yet reachable:', err);
@@ -154,6 +170,14 @@ export default function DashboardPage() {
     }
 
     checkAuth();
+
+    const handleTxUpdate = () => {
+      fetchDashboardData();
+    };
+    window.addEventListener('lunaria:transactions_updated', handleTxUpdate);
+    return () => {
+      window.removeEventListener('lunaria:transactions_updated', handleTxUpdate);
+    };
   }, [fetchDashboardData]);
 
   const handleLoginSuccess = (_token: string, loggedInUser: User) => {
@@ -309,13 +333,12 @@ export default function DashboardPage() {
 
   return (
     <div className="flex h-[100dvh] max-h-[100dvh] w-full max-w-full min-w-0 bg-[var(--background)] text-[var(--foreground)] overflow-hidden transition-colors duration-150">
-      {/* Sidebar Navigation (Desktop persistent + Mobile off-canvas drawer) */}
+      {/* Sidebar Navigation */}
       <Sidebar
         activeTab={activeTab}
         setActiveTab={handleSelectTab}
-        transactionCount={transactions.length}
-        isMobileOpen={isMobileMenuOpen}
-        onCloseMobile={() => setIsMobileMenuOpen(false)}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
 
       {/* Main Content Area */}
@@ -328,22 +351,23 @@ export default function DashboardPage() {
           accounts={accounts}
           transactions={transactions}
           onSelectTab={handleSelectTab}
-          onToggleMobileMenu={() => setIsMobileMenuOpen((prev) => !prev)}
+          onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
+          onOpenCopilot={() => setIsCopilotOpen(true)}
         />
 
-        {/* Scrollable View Area with bottom clearance for MobileBottomNav */}
+        {/* Scrollable View Area */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 max-w-full">
-          <main className="p-3 sm:p-4 md:p-8 max-w-7xl mx-auto w-full min-w-0 pb-24 md:pb-8">
+          <main className="p-3 sm:p-4 md:p-8 max-w-7xl mx-auto w-full min-w-0 pb-8">
             {renderActiveView()}
           </main>
         </div>
       </div>
 
-      {/* Fixed Mobile Bottom Navigation Bar */}
-      <MobileBottomNav
-        activeTab={activeTab}
-        setActiveTab={handleSelectTab}
-        transactionCount={transactions.length}
+      {/* AI Financial Copilot Slide-over Drawer */}
+      <AiCopilotDrawer
+        isOpen={isCopilotOpen}
+        onClose={() => setIsCopilotOpen(false)}
+        userCurrency={user?.currency || 'USD'}
       />
 
       {/* Modals */}

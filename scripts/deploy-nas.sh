@@ -108,7 +108,6 @@ TAR_EXCLUDES=(
   --exclude='.turbo'
   --exclude='.next'
   --exclude='dist'
-  --exclude='mobile'
   --exclude='tests'
   --exclude='*.log'
   --exclude='.env.local'

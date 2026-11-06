@@ -175,3 +175,90 @@ export function resolveIncomeDisplayCategory(tx: {
   };
 }
 
+/**
+ * Normalizes and deduplicates a list of transactions for display.
+ * 1. Enforces strict uniqueness of transaction IDs (both internal id and plaidTransactionId).
+ * 2. Filters out pending transactions that have an equivalent posted transaction
+ *    (matching account, exact/tip-adjusted amount, date within 7 days, matching merchant/name).
+ */
+export function deduplicateTransactionsList<T extends {
+  id?: string;
+  plaidTransactionId?: string | null;
+  accountId?: string;
+  account?: string;
+  amount: number | string;
+  date: string;
+  name?: string | null;
+  merchantName?: string | null;
+  pending?: boolean;
+}>(transactions: T[]): T[] {
+  if (!transactions || transactions.length === 0) return [];
+
+  // 1. Enforce unique IDs
+  const seenIds = new Set<string>();
+  const seenPlaidIds = new Set<string>();
+  const uniqueItems: T[] = [];
+
+  for (const tx of transactions) {
+    if (tx.id && seenIds.has(tx.id)) continue;
+    if (tx.plaidTransactionId && seenPlaidIds.has(tx.plaidTransactionId)) continue;
+    if (tx.id) seenIds.add(tx.id);
+    if (tx.plaidTransactionId) seenPlaidIds.add(tx.plaidTransactionId);
+    uniqueItems.push(tx);
+  }
+
+  // 2. Identify superseded pending transactions
+  const pendingItems = uniqueItems.filter((t) => t.pending);
+  const postedItems = uniqueItems.filter((t) => !t.pending);
+
+  if (pendingItems.length === 0 || postedItems.length === 0) {
+    return uniqueItems;
+  }
+
+  const supersededPendingIds = new Set<string>();
+
+  for (const pending of pendingItems) {
+    const pAcc = pending.accountId || pending.account;
+    const pAmt = Number(pending.amount);
+    const pDate = new Date(pending.date).getTime();
+
+    const match = postedItems.find((posted) => {
+      const tAcc = posted.accountId || posted.account;
+      if (pAcc && tAcc && pAcc !== tAcc) return false;
+
+      const tAmt = Number(posted.amount);
+      const exactAmount = Math.abs(tAmt - pAmt) < 0.001;
+      const isTip = tAmt >= pAmt && pAmt > 0 && (tAmt - pAmt) <= 0.5 * pAmt;
+      if (!exactAmount && !isTip) return false;
+
+      const tDate = new Date(posted.date).getTime();
+      const diffDays = Math.abs(tDate - pDate) / (1000 * 60 * 60 * 24);
+      if (diffDays > 7) return false;
+
+      // Exact amount on same date and same account is an instant match
+      if (exactAmount && diffDays === 0) return true;
+
+      const pName = (pending.merchantName || pending.name || '').toLowerCase().trim();
+      const tName = (posted.merchantName || posted.name || '').toLowerCase().trim();
+      if (!pName || !tName) return exactAmount && diffDays <= 3;
+
+      return (
+        pName === tName ||
+        pName.includes(tName) ||
+        tName.includes(pName)
+      );
+    });
+
+    if (match && pending.id) {
+      supersededPendingIds.add(pending.id);
+    }
+  }
+
+  if (supersededPendingIds.size === 0) {
+    return uniqueItems;
+  }
+
+  return uniqueItems.filter((tx) => !tx.id || !supersededPendingIds.has(tx.id));
+}
+
+

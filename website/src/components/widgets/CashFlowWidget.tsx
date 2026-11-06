@@ -247,16 +247,23 @@ export const CashFlowWidget: React.FC<CashFlowWidgetProps> = ({
         </div>
 
         {/* 2. Big Net Cash Flow Value */}
-        <div
-          className={`text-2xl sm:text-3xl font-extrabold tracking-tight mb-1 ${
-            isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-          }`}
-        >
-          {isPositive ? '+' : '-'}${Math.abs(Math.floor(netCashFlow)).toLocaleString()}
-          <span className="opacity-80 text-lg sm:text-xl font-medium">
-            .{Math.abs(Math.round((netCashFlow % 1) * 100)).toString().padStart(2, '0')}
-          </span>
-        </div>
+        {(() => {
+          const totalCents = Math.round(Math.abs(netCashFlow) * 100);
+          const whole = Math.floor(totalCents / 100).toLocaleString();
+          const cents = (totalCents % 100).toString().padStart(2, '0');
+          return (
+            <div
+              className={`text-2xl sm:text-3xl font-extrabold tracking-tight mb-1 ${
+                isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+              }`}
+            >
+              {isPositive ? '+' : '-'}${whole}
+              <span className="opacity-80 text-lg sm:text-xl font-medium">
+                .{cents}
+              </span>
+            </div>
+          );
+        })()}
 
         <div className="text-xs text-slate-500 font-medium">
           {hasTransactions ? (

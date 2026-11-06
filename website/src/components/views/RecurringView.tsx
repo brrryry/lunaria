@@ -69,6 +69,7 @@ export const RecurringView: React.FC<RecurringViewProps> = () => {
       if (showLoading) setIsLoading(true);
       const res = await fetch(`${API_BASE}/plaid/recurring`, {
         headers: getHeaders(),
+        credentials: 'include',
       });
       if (res.ok) {
         const json: RecurringTransactionsResponse = await res.json();
@@ -116,6 +117,7 @@ export const RecurringView: React.FC<RecurringViewProps> = () => {
       await fetch(`${API_BASE}/plaid/recurring/dismiss`, {
         method: 'POST',
         headers: getHeaders(),
+        credentials: 'include',
         body: JSON.stringify({
           streamId: stream.id,
           merchantName: stream.merchantName || stream.description,
@@ -154,6 +156,7 @@ export const RecurringView: React.FC<RecurringViewProps> = () => {
       await fetch(`${API_BASE}/plaid/recurring/restore`, {
         method: 'POST',
         headers: getHeaders(),
+        credentials: 'include',
         body: JSON.stringify({
           streamId: stream.id,
         }),
@@ -422,7 +425,7 @@ export const RecurringView: React.FC<RecurringViewProps> = () => {
           {/* Search & Frequency Filter */}
           <div className="flex flex-wrap items-center gap-2">
             {/* Search Input */}
-            <div className="relative min-w-[180px] sm:min-w-[220px]">
+            <div className="relative flex-1 sm:flex-initial min-w-[180px] sm:min-w-[240px] lg:min-w-[280px]">
               <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"

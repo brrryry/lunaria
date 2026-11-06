@@ -36,10 +36,13 @@ export class NotificationsController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
     const userId = await this.authService.resolveUserId(
       queryUserId || headerUserId,
       authHeader,
+      undefined,
+      cookieHeader,
     );
     return this.pushService.registerSubscription(userId, dto);
   }
@@ -50,10 +53,13 @@ export class NotificationsController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
     const userId = await this.authService.resolveUserId(
       queryUserId || headerUserId,
       authHeader,
+      undefined,
+      cookieHeader,
     );
     return this.pushService.unregisterSubscription(userId, token);
   }
@@ -63,10 +69,13 @@ export class NotificationsController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
     const userId = await this.authService.resolveUserId(
       queryUserId || headerUserId,
       authHeader,
+      undefined,
+      cookieHeader,
     );
     return this.notificationsService.getNotifications(userId);
   }
@@ -76,10 +85,13 @@ export class NotificationsController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
     const userId = await this.authService.resolveUserId(
       queryUserId || headerUserId,
       authHeader,
+      undefined,
+      cookieHeader,
     );
     return this.notificationsService.getPreferences(userId);
   }
@@ -90,10 +102,13 @@ export class NotificationsController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
     const userId = await this.authService.resolveUserId(
       queryUserId || headerUserId,
       authHeader,
+      undefined,
+      cookieHeader,
     );
     return this.notificationsService.updatePreferences(userId, dto);
   }
@@ -104,10 +119,13 @@ export class NotificationsController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
     const userId = await this.authService.resolveUserId(
       queryUserId || headerUserId,
       authHeader,
+      undefined,
+      cookieHeader,
     );
     return this.notificationsService.markAsRead(userId, id);
   }
@@ -117,10 +135,13 @@ export class NotificationsController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
     const userId = await this.authService.resolveUserId(
       queryUserId || headerUserId,
       authHeader,
+      undefined,
+      cookieHeader,
     );
     return this.notificationsService.markAllAsRead(userId);
   }
@@ -131,10 +152,13 @@ export class NotificationsController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
     const userId = await this.authService.resolveUserId(
       queryUserId || headerUserId,
       authHeader,
+      undefined,
+      cookieHeader,
     );
     return this.notificationsService.dismissNotification(userId, id);
   }
@@ -144,10 +168,13 @@ export class NotificationsController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
     const userId = await this.authService.resolveUserId(
       queryUserId || headerUserId,
       authHeader,
+      undefined,
+      cookieHeader,
     );
     return this.notificationsService.clearAllNotifications(userId);
   }

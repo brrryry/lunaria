@@ -15,9 +15,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  viewportFit: 'cover',
   themeColor: '#090a0f',
 };
 
@@ -30,6 +27,11 @@ const themeInitScript = `
       document.documentElement.classList.remove('light', 'dark');
       document.documentElement.classList.add(theme);
       document.documentElement.style.colorScheme = theme;
+
+      var savedGradient = localStorage.getItem('lunaria_gradient_theme');
+      var validGradients = ['lunaria', 'aurora', 'sunset', 'sapphire', 'neon', 'monochrome'];
+      var gradient = validGradients.indexOf(savedGradient) !== -1 ? savedGradient : 'lunaria';
+      document.documentElement.dataset.gradient = gradient;
     } catch (e) {}
   })();
 `;

@@ -91,7 +91,7 @@ export const pushSubscriptions = pgTable('push_subscriptions', {
   userId: uuid('user_id')
     .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
-  platform: varchar('platform', { length: 32 }).notNull(), // 'web' | 'expo' | 'ios' | 'android'
+  platform: varchar('platform', { length: 32 }).notNull(), // 'web'
   token: text('token').notNull(),
   endpoint: text('endpoint'),
   p256dh: text('p256dh'),

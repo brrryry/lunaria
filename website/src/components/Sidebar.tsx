@@ -17,23 +17,20 @@ import {
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  transactionCount?: number;
-  isMobileOpen?: boolean;
-  onCloseMobile?: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   setActiveTab,
-  transactionCount,
-  isMobileOpen = false,
-  onCloseMobile,
+  isOpen = false,
+  onClose,
 }) => {
   const navItems: Array<{
     id: string;
     label: string;
     icon: any;
-    badge?: string;
   }> = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     {
@@ -50,14 +47,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const handleItemClick = (id: string) => {
     setActiveTab(id);
-    if (onCloseMobile) {
-      onCloseMobile();
+    if (onClose) {
+      onClose();
     }
   };
 
   const content = (
     <div className="flex flex-col h-full p-4">
-      {/* Brand & Mobile Close Button */}
+      {/* Brand */}
       <div className="flex items-center justify-between px-3 py-4 mb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shadow-lg shadow-purple-500/10 relative group">
@@ -75,10 +72,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
 
-        {onCloseMobile && (
+        {onClose && (
           <button
             type="button"
-            onClick={onCloseMobile}
+            onClick={onClose}
             className="md:hidden p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             aria-label="Close navigation"
           >
@@ -98,22 +95,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
               type="button"
               onClick={() => handleItemClick(item.id)}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium border transition-colors duration-150 outline-none select-none ${isActive
-                  ? 'bg-purple-600/10 dark:bg-purple-600/15 text-purple-700 dark:text-purple-300 border-purple-500/30 shadow-sm'
+                  ? 'nav-link-brand-active shadow-sm font-semibold'
                   : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50'
                 }`}
             >
               <div className="flex items-center gap-3">
                 <Icon
-                  className={`w-4 h-4 ${isActive ? 'text-purple-600 dark:text-purple-400' : 'text-slate-500 dark:text-slate-400'
+                  className={`w-4 h-4 ${isActive ? 'text-[var(--brand-active-text)]' : 'text-slate-500 dark:text-slate-400'
                     }`}
                 />
                 <span>{item.label}</span>
               </div>
-              {item.badge && (
-                <span className="px-2 py-0.5 text-[11px] rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold">
-                  {item.badge}
-                </span>
-              )}
             </button>
           );
         })}
@@ -129,12 +121,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           type="button"
           onClick={() => handleItemClick('settings')}
           className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-sm border transition-colors duration-150 outline-none select-none ${activeTab === 'settings'
-              ? 'bg-purple-600/10 dark:bg-purple-600/15 text-purple-700 dark:text-purple-300 border-purple-500/30 shadow-sm'
+              ? 'nav-link-brand-active shadow-sm font-semibold'
               : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50'
             }`}
         >
           <Settings
-            className={`w-4 h-4 ${activeTab === 'settings' ? 'text-purple-600 dark:text-purple-400' : 'text-slate-500 dark:text-slate-400'
+            className={`w-4 h-4 ${activeTab === 'settings' ? 'text-[var(--brand-active-text)]' : 'text-slate-500 dark:text-slate-400'
               }`}
           />
           <span>Settings</span>
@@ -145,22 +137,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Desktop Persistent Sidebar */}
+      {/* Persistent Sidebar on Desktop */}
       <aside className="hidden md:flex md:w-64 border-r border-slate-200/80 dark:border-slate-800/80 bg-white/95 dark:bg-[#0c0f17]/95 flex-col z-20 shrink-0 transition-colors duration-150">
         {content}
       </aside>
 
-      {/* Mobile Off-Canvas Drawer */}
-      {isMobileOpen && (
+      {/* Responsive Off-Canvas Sidebar for Narrow Windows */}
+      {isOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex">
-          {/* Backdrop */}
           <div
             className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity"
-            onClick={onCloseMobile}
+            onClick={onClose}
             aria-hidden="true"
           />
-
-          {/* Drawer Content */}
           <aside className="relative w-72 max-w-[85vw] bg-white dark:bg-[#0c0f17] border-r border-slate-200 dark:border-slate-800 shadow-2xl h-full z-10 animate-in slide-in-from-left duration-200 transition-colors duration-150">
             {content}
           </aside>

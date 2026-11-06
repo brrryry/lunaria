@@ -11,6 +11,7 @@ import { StocksModule } from './stocks/stocks.module.js';
 import { CategoriesModule } from './categories/categories.module.js';
 import { BudgetModule } from './budget/budget.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
+import { AiModule } from './ai/ai.module.js';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { NotificationsModule } from './notifications/notifications.module.js';
     CategoriesModule,
     BudgetModule,
     NotificationsModule,
+    AiModule,
   ],
   providers: [
     {

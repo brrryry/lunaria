@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Delete, Param, Body, Query, Headers } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query, Headers } from '@nestjs/common';
 import { TransactionsService } from './transactions.service.js';
 import { AuthService } from '../auth/auth.service.js';
 
@@ -9,11 +9,23 @@ export class TransactionsController {
     private readonly authService: AuthService,
   ) {}
 
+  @Post('reconcile')
+  async reconcileTransactions(
+    @Query('userId') queryUserId?: string,
+    @Headers('x-user-id') headerUserId?: string,
+    @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
+  ) {
+    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader, undefined, cookieHeader);
+    return this.transactionsService.reconcilePendingTransactions(userId);
+  }
+
   @Get()
   async getTransactions(
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
     @Query('accountId') accountId?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
@@ -22,7 +34,7 @@ export class TransactionsController {
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
-    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader);
+    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader, undefined, cookieHeader);
     return this.transactionsService.getTransactions(userId, {
       accountId,
       startDate,
@@ -39,8 +51,9 @@ export class TransactionsController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
-    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader);
+    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader, undefined, cookieHeader);
     return this.transactionsService.getAccounts(userId);
   }
 
@@ -51,8 +64,9 @@ export class TransactionsController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
-    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader);
+    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader, undefined, cookieHeader);
     return this.transactionsService.updateAccount(id, userId, dto);
   }
 
@@ -62,8 +76,9 @@ export class TransactionsController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
-    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader);
+    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader, undefined, cookieHeader);
     return this.transactionsService.deleteAccount(id, userId);
   }
 
@@ -73,8 +88,9 @@ export class TransactionsController {
     @Query('excludeTransfers') excludeTransfers?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
-    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader);
+    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader, undefined, cookieHeader);
     const shouldExclude = excludeTransfers !== 'false';
     return this.transactionsService.getSpendingSummary(userId, shouldExclude);
   }
@@ -84,8 +100,9 @@ export class TransactionsController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
-    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader);
+    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader, undefined, cookieHeader);
     return this.transactionsService.getCategoryRules(userId);
   }
 
@@ -97,8 +114,9 @@ export class TransactionsController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
-    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader);
+    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader, undefined, cookieHeader);
     return this.transactionsService.updateCategory(id, userId, dto);
   }
 }

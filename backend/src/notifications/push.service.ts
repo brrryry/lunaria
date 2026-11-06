@@ -6,7 +6,7 @@ import { DATABASE_TOKEN } from '../database/database.module.js';
 import { LunariaDb, pushSubscriptions } from '@lunaria/db';
 
 export interface PushSubscriptionDto {
-  platform: 'web' | 'expo' | 'ios' | 'android';
+  platform: 'web';
   token: string;
   endpoint?: string;
   keys?: {
@@ -141,14 +141,11 @@ export class PushService {
     }
 
     const webSubs = subscriptions.filter((s) => s.platform === 'web' && s.endpoint);
-    const expoSubs = subscriptions.filter(
-      (s) => s.platform === 'expo' || s.token.startsWith('ExponentPushToken['),
-    );
 
     let sent = 0;
     let failed = 0;
 
-    // 1. Dispatch Web Push (Browser)
+    // Dispatch Web Push (Browser)
     if (webSubs.length > 0 && this.isVapidConfigured) {
       const pushContent = JSON.stringify({
         title: payload.title,
@@ -186,43 +183,6 @@ export class PushService {
           }
         }),
       );
-    }
-
-    // 2. Dispatch Expo Mobile Push (iOS / Android)
-    if (expoSubs.length > 0) {
-      const expoMessages = expoSubs.map((sub) => ({
-        to: sub.token,
-        sound: 'default',
-        title: payload.title,
-        body: payload.message,
-        data: {
-          url: payload.url || '/',
-          ...(payload.metadata || {}),
-        },
-      }));
-
-      try {
-        const response = await fetch('https://exp.host/--/api/v2/push/send', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
-          body: JSON.stringify(expoMessages),
-        });
-
-        if (response.ok) {
-          const resData: any = await response.json();
-          sent += expoSubs.length;
-          this.logger.log(`[Expo Mobile Push Sent] Dispatched ${expoSubs.length} messages: ${JSON.stringify(resData?.data || {})}`);
-        } else {
-          failed += expoSubs.length;
-          this.logger.error(`Expo Push API error: ${response.status} ${response.statusText}`);
-        }
-      } catch (err) {
-        failed += expoSubs.length;
-        this.logger.error('Failed to send Expo mobile push:', err);
-      }
     }
 
     return { sent, failed, total: subscriptions.length };

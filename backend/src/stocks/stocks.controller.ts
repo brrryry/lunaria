@@ -14,9 +14,10 @@ export class StocksController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
     @Query('timeframe') timeframe?: string,
   ) {
-    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader);
+    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader, undefined, cookieHeader);
     return this.stocksService.getPortfolioHistory(userId, timeframe);
   }
 
@@ -25,9 +26,10 @@ export class StocksController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
     @Query('timeframe') timeframe?: string,
   ) {
-    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader);
+    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader, undefined, cookieHeader);
     return this.stocksService.getNetWorthHistory(userId, timeframe);
   }
 
@@ -36,8 +38,9 @@ export class StocksController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
-    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader);
+    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader, undefined, cookieHeader);
     return this.stocksService.getHoldings(userId);
   }
 
@@ -47,8 +50,9 @@ export class StocksController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
-    await this.authService.resolveUserId(queryUserId || headerUserId, authHeader);
+    await this.authService.resolveUserId(queryUserId || headerUserId, authHeader, undefined, cookieHeader);
     return this.stocksService.getTickerHistory(symbol);
   }
 
@@ -57,10 +61,11 @@ export class StocksController {
     @Query('userId') queryUserId?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
-    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader);
+    const userId = await this.authService.resolveUserId(queryUserId || headerUserId, authHeader, undefined, cookieHeader);
     return this.stocksService.getInvestmentTransactions(
       userId,
       limit ? parseInt(limit, 10) : 50,

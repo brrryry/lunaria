@@ -106,12 +106,15 @@ export class AuthController {
   }
 
   @Get('me')
-  async getMe(@Headers('authorization') authHeader?: string) {
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Missing or invalid Authorization header');
+  async getMe(
+    @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
+  ) {
+    const token = this.authService.extractToken(authHeader, cookieHeader);
+    if (!token) {
+      throw new UnauthorizedException('Missing or invalid Authorization header or session');
     }
 
-    const token = authHeader.substring(7).trim();
     const payload = this.authService.verifyToken(token);
     const user = await this.authService.getUser(payload.sub);
 
@@ -138,10 +141,13 @@ export class AuthController {
   }
 
   @Get('session')
-  async getSession(@Headers('authorization') authHeader?: string) {
-    if (authHeader && authHeader.startsWith('Bearer ')) {
+  async getSession(
+    @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
+  ) {
+    const token = this.authService.extractToken(authHeader, cookieHeader);
+    if (token) {
       try {
-        const token = authHeader.substring(7).trim();
         const payload = this.authService.verifyToken(token);
         const user = await this.authService.getUser(payload.sub);
         if (user && this.authService.isEmailWhitelisted(user.email)) {
@@ -198,11 +204,12 @@ export class AuthController {
   async getUser(
     @Param('id') id: string,
     @Headers('authorization') authHeader?: string,
+    @Headers('cookie') cookieHeader?: string,
   ) {
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Missing or invalid Authorization header');
+    const token = this.authService.extractToken(authHeader, cookieHeader);
+    if (!token) {
+      throw new UnauthorizedException('Missing or invalid Authorization header or session');
     }
-    const token = authHeader.substring(7).trim();
     const payload = this.authService.verifyToken(token);
     if (payload.sub !== id) {
       throw new UnauthorizedException('Forbidden: cannot access other user profiles');

@@ -105,7 +105,14 @@ const ChannelToggleButtons: React.FC<{
 );
 
 export const SettingsView: React.FC<SettingsViewProps> = ({ onRefreshData, transactions = [] }) => {
-  const { theme, resolvedTheme, setTheme } = useTheme();
+  const {
+    theme,
+    resolvedTheme,
+    setTheme,
+    gradientTheme,
+    setGradientTheme,
+    gradientPresets,
+  } = useTheme();
   const [activeTab, setActiveTab] = useState<'appearance' | 'notifications' | 'categories' | 'system'>('appearance');
 
   // Category & Rules Management State
@@ -594,6 +601,167 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onRefreshData, trans
               </button>
             </div>
           </div>
+
+          {/* Accent Color Gradients Card */}
+          <div className="glass-panel rounded-2xl p-6 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-600 dark:text-purple-400">
+                  <Palette className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>Accent Color Gradients</span>
+                    <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-300 border border-purple-500/20">
+                      Dynamic UI
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Personalize Lunaria's brand accents, interactive buttons, graphs, and glows
+                  </p>
+                </div>
+              </div>
+
+              {/* Reset to Default if not default */}
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  Active theme:{' '}
+                  <strong className="text-slate-900 dark:text-white capitalize font-semibold">
+                    {gradientPresets.find((g) => g.id === gradientTheme)?.name || gradientTheme}
+                  </strong>
+                </span>
+                {gradientTheme !== 'lunaria' && (
+                  <button
+                    type="button"
+                    onClick={() => setGradientTheme('lunaria')}
+                    className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 cursor-pointer ml-1"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    <span>Reset Default</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Responsive Grid of Gradient Theme Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {gradientPresets.map((preset) => {
+                const isSelected = gradientTheme === preset.id;
+                return (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => setGradientTheme(preset.id)}
+                    className={`relative p-4 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between h-44 cursor-pointer group ${
+                      isSelected
+                        ? 'border-purple-500 ring-2 ring-purple-500/30 bg-purple-50/70 dark:bg-purple-950/20 shadow-md'
+                        : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white/70 dark:bg-slate-900/40 hover:bg-white dark:hover:bg-slate-900/60'
+                    }`}
+                  >
+                    <div>
+                      {/* Top Swatch Row */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div
+                          className="h-7 w-28 rounded-xl shadow-inner border border-white/20 transition-transform duration-300 group-hover:scale-105"
+                          style={{ background: preset.previewGradient }}
+                        />
+                        {isSelected ? (
+                          <div className="w-6 h-6 rounded-full bg-purple-600 text-white flex items-center justify-center shadow-sm">
+                            <Check className="w-3.5 h-3.5" />
+                          </div>
+                        ) : (
+                          <div className="w-6 h-6 rounded-full border border-slate-300 dark:border-slate-700 group-hover:border-slate-400 transition-colors" />
+                        )}
+                      </div>
+
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <span>{preset.name}</span>
+                      </h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+                        {preset.tagline}
+                      </p>
+                    </div>
+
+                    {/* Color dots row */}
+                    <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800/80">
+                      <div className="flex items-center gap-1.5">
+                        {preset.colors.map((c, i) => (
+                          <span
+                            key={i}
+                            className="w-3 h-3 rounded-full border border-black/10 dark:border-white/10 shadow-xs"
+                            style={{ backgroundColor: c }}
+                            title={c}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {preset.colors[0]}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Live Interactive Preview Box */}
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>Theme & Scheme Live Preview</span>
+                  <span className="w-2 h-2 rounded-full bg-[var(--gradient-accent)] animate-pulse" />
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Real-time preview of your selected theme on logo tints, primary buttons, secondary highlights, badges, and glows.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+                {/* Dynamic Themed Logo Pill */}
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-500/10 border border-purple-500/25 shadow-xs">
+                  <img
+                    src="/logo.png"
+                    alt="Logo preview"
+                    className="w-4 h-4 object-contain logo-themed"
+                  />
+                  <span className="text-[11px] font-bold text-slate-900 dark:text-white">
+                    Logo
+                  </span>
+                </div>
+
+                {/* Primary Button */}
+                <button
+                  type="button"
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm flex items-center gap-1.5 cursor-pointer transition-all active:scale-98"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Primary</span>
+                </button>
+
+                {/* Secondary Highlight Button */}
+                <button
+                  type="button"
+                  className="btn-secondary-themed px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer active:scale-98"
+                >
+                  <Sliders className="w-3.5 h-3.5" />
+                  <span>Highlight</span>
+                </button>
+
+                {/* Gradient Accent Button */}
+                <button
+                  type="button"
+                  className="btn-gradient-brand px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Gradient</span>
+                </button>
+
+                {/* Dynamic Badge */}
+                <span className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-purple-500/10 text-purple-600 dark:text-purple-300 border border-purple-500/25">
+                  Live Badge
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       ) : activeTab === 'notifications' ? (
         <div className="space-y-6">
@@ -685,8 +853,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onRefreshData, trans
                     <Smartphone className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-xs font-semibold text-white">Phone & Push</div>
-                    <div className="text-[11px] text-slate-400">Mobile & web alerts</div>
+                    <div className="text-xs font-semibold text-white">Browser Push</div>
+                    <div className="text-[11px] text-slate-400">Web push alerts</div>
                   </div>
                 </div>
                 <button
@@ -755,7 +923,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onRefreshData, trans
                     ? 'This browser will receive native OS notifications (RFC 8291 VAPID) even when Lunaria is closed.'
                     : pushPermission === 'denied'
                     ? 'Notifications are blocked in your browser site permissions. Click the lock icon in your address bar to re-enable.'
-                    : 'Subscribe this device via Web Push API to receive instant OS desktop & mobile push alerts.'}
+                    : 'Subscribe this device via Web Push API to receive instant OS desktop & browser push alerts.'}
                 </p>
                 {pushErrorMessage && (
                   <p className="text-[11px] text-rose-400 font-medium">{pushErrorMessage}</p>

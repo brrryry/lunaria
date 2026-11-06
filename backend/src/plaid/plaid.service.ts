@@ -31,7 +31,7 @@ import {
   institutionUnlinkHistory,
   userRecurringExclusions,
 } from '@lunaria/db';
-import { eq, and, or, gte, desc, sql } from 'drizzle-orm';
+import { eq, and, or, gte, desc, sql, inArray } from 'drizzle-orm';
 import {
   RecurringStreamItem,
   RecurringFrequency,
@@ -42,6 +42,7 @@ import { EncryptionService } from '../common/encryption.service.js';
 import { AuthService } from '../auth/auth.service.js';
 import { StocksService } from '../stocks/stocks.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
+import { reconcilePendingTransactionsInDb } from '../transactions/transactions.service.js';
 import * as crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 
@@ -99,7 +100,11 @@ export class PlaidService {
   async createLinkToken(userId?: string) {
     const user = await this.resolveUser(userId);
 
-    const request = {
+    const linkCustomization =
+      this.config.get<string>('PLAID_LINK_CUSTOMIZATION_NAME') ||
+      process.env.PLAID_LINK_CUSTOMIZATION_NAME;
+
+    const request: any = {
       user: { client_user_id: user.id },
       client_name: 'Lunaria',
       products: [Products.Transactions],
@@ -109,6 +114,7 @@ export class PlaidService {
       transactions: {
         days_requested: 730, // Request full 2 years (730 days) of historical transactions
       },
+      ...(linkCustomization ? { link_customization_name: linkCustomization } : {}),
     };
 
     try {
@@ -150,6 +156,10 @@ export class PlaidService {
 
     const decryptedToken = this.encryption.decrypt(item.accessTokenEncrypted);
 
+    const linkCustomization =
+      this.config.get<string>('PLAID_LINK_CUSTOMIZATION_NAME') ||
+      process.env.PLAID_LINK_CUSTOMIZATION_NAME;
+
     // In Update Mode, products parameter MUST NOT be passed.
     // access_token is passed to put Link into update mode.
     const request: any = {
@@ -161,6 +171,7 @@ export class PlaidService {
       update: {
         account_selection_enabled: true,
       },
+      ...(linkCustomization ? { link_customization_name: linkCustomization } : {}),
     };
 
     try {
@@ -326,15 +337,21 @@ export class PlaidService {
 
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-    const recentUnlinks = await this.db
-      .select()
-      .from(institutionUnlinkHistory)
-      .where(
-        and(
-          eq(institutionUnlinkHistory.userId, userId),
-          gte(institutionUnlinkHistory.unlinkedAt, twentyFourHoursAgo),
-        ),
-      );
+    let recentUnlinks: Array<{ institutionId: string; institutionName: string }> = [];
+    try {
+      await this.ensureInstitutionUnlinksTable();
+      recentUnlinks = await this.db
+        .select()
+        .from(institutionUnlinkHistory)
+        .where(
+          and(
+            eq(institutionUnlinkHistory.userId, userId),
+            gte(institutionUnlinkHistory.unlinkedAt, twentyFourHoursAgo),
+          ),
+        );
+    } catch (err) {
+      this.logger.warn(`Failed to query institution_unlink_history for churn check: ${err}`);
+    }
 
     const matchingUnlinks = recentUnlinks.filter((u) => {
       const uId = (u.institutionId || '').trim().toLowerCase();
@@ -585,7 +602,15 @@ export class PlaidService {
           730,
         );
       }
-    } catch (err) {
+    } catch (err: any) {
+      const errorCode = err?.response?.data?.error_code;
+      if (errorCode === 'ITEM_LOGIN_REQUIRED') {
+        await this.db
+          .update(plaidItems)
+          .set({ status: 'disconnected', updatedAt: new Date() })
+          .where(eq(plaidItems.id, plaidItemRecordId));
+        await this.notificationsService.evaluateLiveAlerts(userId);
+      }
       this.logger.error('Error syncing accounts from Plaid:', err);
     }
   }
@@ -697,15 +722,40 @@ export class PlaidService {
           cursor,
         });
 
-        const { added, modified, next_cursor, has_more } = response.data;
+        const { added, modified, removed, next_cursor, has_more } = response.data;
         const allTx = [...added, ...modified];
         hasMore = has_more;
         cursor = next_cursor;
 
+        // Remove any deleted or superseded pending transactions reported by Plaid
+        const removedIds = (removed || [])
+          .map((r) => r.transaction_id)
+          .filter((id): id is string => Boolean(id));
+
+        const pendingIdsToRemove = allTx
+          .map((tx: any) => tx.pending_transaction_id)
+          .filter((id): id is string => Boolean(id));
+
+        const idsToDelete = Array.from(new Set([...removedIds, ...pendingIdsToRemove]));
+        if (idsToDelete.length > 0) {
+          await this.db
+            .delete(transactions)
+            .where(
+              and(
+                eq(transactions.userId, userId),
+                inArray(transactions.plaidTransactionId, idsToDelete),
+              ),
+            );
+        }
+
+        // Filter out any superseded pending transactions from allTx before inserting
+        const supersededIdSet = new Set(pendingIdsToRemove);
+        const txToProcess = allTx.filter((tx) => !supersededIdSet.has(tx.transaction_id));
+
         // Process transactions in concurrent batches for high-throughput insertion
         const BATCH_SIZE = 25;
-        for (let i = 0; i < allTx.length; i += BATCH_SIZE) {
-          const batch = allTx.slice(i, i + BATCH_SIZE);
+        for (let i = 0; i < txToProcess.length; i += BATCH_SIZE) {
+          const batch = txToProcess.slice(i, i + BATCH_SIZE);
           await Promise.all(
             batch.map(async (tx) => {
               const accountDbId = accountMap.get(tx.account_id);
@@ -752,6 +802,7 @@ export class PlaidService {
             try {
               await this.notificationsService.handleNewTransaction(userId, {
                 plaidTransactionId: tx.transaction_id,
+                pendingTransactionId: (tx as any).pending_transaction_id,
                 amount: tx.amount,
                 name: tx.name,
                 merchantName: tx.merchant_name,
@@ -773,6 +824,13 @@ export class PlaidService {
         totalAdded += allTx.length;
       }
 
+      // Reconcile and prune any lingering/duplicate pending transactions
+      try {
+        await reconcilePendingTransactionsInDb(this.db, userId);
+      } catch (recErr: any) {
+        this.logger.warn(`Post-sync duplicate reconciliation notice: ${recErr?.message || recErr}`);
+      }
+
       // Update cursor
       await this.db
         .update(plaidItems)
@@ -781,6 +839,14 @@ export class PlaidService {
 
       this.logger.log(`Synced ${totalAdded} transactions for item ${plaidItemRecordId}`);
     } catch (err: any) {
+      const errorCode = err?.response?.data?.error_code;
+      if (errorCode === 'ITEM_LOGIN_REQUIRED') {
+        await this.db
+          .update(plaidItems)
+          .set({ status: 'disconnected', updatedAt: new Date() })
+          .where(eq(plaidItems.id, plaidItemRecordId));
+        await this.notificationsService.evaluateLiveAlerts(userId);
+      }
       this.logger.error(`Error syncing transactions from Plaid: ${err?.message || err}`);
     }
   }
@@ -835,6 +901,7 @@ export class PlaidService {
           await this.syncTransactions(item.id, accessToken, item.userId);
           await this.syncInvestmentHoldings(item.id, accessToken, item.userId);
           await this.syncInvestmentTransactions(item.id, accessToken, item.userId);
+          await reconcilePendingTransactionsInDb(this.db, item.userId);
           this.logger.log(
             `Cron synced item ${item.id} (${item.institutionName || 'Financial Institution'}) for user ${item.userId}`,
           );
@@ -1102,6 +1169,7 @@ export class PlaidService {
     // Record unlink in institutionUnlinkHistory before deletion to enforce churn limits
     try {
       if (item.institutionId || item.institutionName) {
+        await this.ensureInstitutionUnlinksTable();
         await this.db.insert(institutionUnlinkHistory).values({
           userId,
           institutionId: item.institutionId || 'unknown',
@@ -1216,19 +1284,53 @@ export class PlaidService {
   async handleWebhook(body: any) {
     this.logger.log(`Received Plaid webhook: ${body?.webhook_type} - ${body?.webhook_code}`);
 
-    if (body?.webhook_type === 'TRANSACTIONS' && body?.item_id) {
-      // Plaid fires INITIAL_UPDATE, HISTORICAL_UPDATE, DEFAULT_UPDATE, SYNC_UPDATES_AVAILABLE
-      const [item] = await this.db
-        .select()
-        .from(plaidItems)
-        .where(eq(plaidItems.itemId, body.item_id))
-        .limit(1);
+    if (!body?.item_id) {
+      return { received: true };
+    }
 
-      if (item) {
-        const accessToken = this.encryption.decrypt(item.accessTokenEncrypted);
-        await this.syncTransactions(item.id, accessToken, item.userId);
-        this.logger.log(
-          `Auto-synced transactions for item ${item.id} upon receiving ${body.webhook_code}`,
+    const [item] = await this.db
+      .select()
+      .from(plaidItems)
+      .where(eq(plaidItems.itemId, body.item_id))
+      .limit(1);
+
+    if (!item) {
+      return { received: true };
+    }
+
+    if (body?.webhook_type === 'TRANSACTIONS') {
+      // Plaid fires INITIAL_UPDATE, HISTORICAL_UPDATE, DEFAULT_UPDATE, SYNC_UPDATES_AVAILABLE, TRANSACTIONS_REMOVED
+      const accessToken = this.encryption.decrypt(item.accessTokenEncrypted);
+      await this.syncAccounts(item.id, accessToken, item.userId, item.institutionName);
+      await this.syncTransactions(item.id, accessToken, item.userId);
+      this.logger.log(
+        `Auto-synced transactions for item ${item.id} upon receiving ${body.webhook_code}`,
+      );
+    } else if (
+      body?.webhook_type === 'HOLDINGS' ||
+      body?.webhook_type === 'INVESTMENTS_TRANSACTIONS'
+    ) {
+      const accessToken = this.encryption.decrypt(item.accessTokenEncrypted);
+      await this.syncAccounts(item.id, accessToken, item.userId, item.institutionName);
+      await this.syncInvestmentHoldings(item.id, accessToken, item.userId);
+      await this.syncInvestmentTransactions(item.id, accessToken, item.userId);
+      this.logger.log(
+        `Auto-synced investments for item ${item.id} upon receiving ${body.webhook_type}:${body.webhook_code}`,
+      );
+    } else if (body?.webhook_type === 'ITEM') {
+      const errorCode = body?.error?.error_code;
+      if (
+        (body?.webhook_code === 'ERROR' && errorCode === 'ITEM_LOGIN_REQUIRED') ||
+        body?.webhook_code === 'PENDING_EXPIRATION' ||
+        body?.webhook_code === 'PENDING_DISCONNECT'
+      ) {
+        await this.db
+          .update(plaidItems)
+          .set({ status: 'disconnected', updatedAt: new Date() })
+          .where(eq(plaidItems.id, item.id));
+        await this.notificationsService.evaluateLiveAlerts(item.userId);
+        this.logger.warn(
+          `Marked Plaid item ${item.id} as disconnected upon receiving ITEM:${body.webhook_code}`,
         );
       }
     }
@@ -1236,7 +1338,30 @@ export class PlaidService {
     return { received: true };
   }
 
+  private unlinkTableEnsured = false;
+  private recurringTableEnsured = false;
+
+  private async ensureInstitutionUnlinksTable() {
+    if (this.unlinkTableEnsured) return;
+    try {
+      await this.db.execute(sql`
+        CREATE TABLE IF NOT EXISTS institution_unlink_history (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          institution_id TEXT NOT NULL,
+          institution_name TEXT NOT NULL,
+          unlinked_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+        CREATE INDEX IF NOT EXISTS idx_unlink_user_inst_time ON institution_unlink_history(user_id, institution_id, unlinked_at);
+      `);
+      this.unlinkTableEnsured = true;
+    } catch (err) {
+      this.logger.warn(`Could not verify institution_unlink_history table: ${err}`);
+    }
+  }
+
   private async ensureRecurringExclusionsTable() {
+    if (this.recurringTableEnsured) return;
     try {
       await this.db.execute(sql`
         CREATE TABLE IF NOT EXISTS user_recurring_exclusions (
@@ -1248,6 +1373,7 @@ export class PlaidService {
         );
         CREATE INDEX IF NOT EXISTS idx_user_recurring_exclusions_user ON user_recurring_exclusions(user_id);
       `);
+      this.recurringTableEnsured = true;
     } catch (err) {
       this.logger.warn(`Could not verify user_recurring_exclusions table: ${err}`);
     }
@@ -1463,15 +1589,17 @@ export class PlaidService {
         if (knownMerchantKeys.has(cleanNameLower)) continue;
         if (g.dates.length < 2) continue;
 
-        // Calculate intervals between sorted consecutive dates
-        const sortedDates = [...g.dates]
-          .map((d) => new Date(d).getTime())
-          .sort((a, b) => b - a);
+        // Calculate intervals between sorted unique consecutive dates
+        const uniqueDayTimestamps = Array.from(
+          new Set(g.dates.map((d) => new Date(d).setHours(0, 0, 0, 0))),
+        ).sort((a, b) => b - a);
+
+        if (uniqueDayTimestamps.length < 2) continue;
 
         const intervals: number[] = [];
-        for (let i = 0; i < sortedDates.length - 1; i++) {
+        for (let i = 0; i < uniqueDayTimestamps.length - 1; i++) {
           const diffDays = Math.round(
-            (sortedDates[i] - sortedDates[i + 1]) / (1000 * 60 * 60 * 24),
+            (uniqueDayTimestamps[i] - uniqueDayTimestamps[i + 1]) / (1000 * 60 * 60 * 24),
           );
           if (diffDays > 0) {
             intervals.push(diffDays);

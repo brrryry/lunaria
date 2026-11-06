@@ -14,6 +14,41 @@
   --scrollbar-track: #f1f5f9;
   --scrollbar-thumb: #cbd5e1;
   --scrollbar-thumb-hover: #94a3b8;
+
+  /* Default Lunaria Orchid & Violet Theme Ramps (Space-separated RGB for Tailwind alpha-value) */
+  --color-primary-50: 250 245 255;
+  --color-primary-100: 245 232 255;
+  --color-primary-200: 237 213 254;
+  --color-primary-300: 223 180 253;
+  --color-primary-400: 203 130 246;
+  --color-primary-500: 203 109 230;
+  --color-primary-600: 168 85 247;
+  --color-primary-700: 147 51 234;
+  --color-primary-800: 126 34 206;
+  --color-primary-900: 88 28 135;
+  --color-primary-950: 46 16 101;
+
+  --color-accent-50: 250 245 255;
+  --color-accent-100: 243 232 255;
+  --color-accent-200: 233 213 255;
+  --color-accent-300: 216 180 254;
+  --color-accent-400: 192 132 252;
+  --color-accent-500: 168 85 247;
+  --color-accent-600: 147 51 234;
+  --color-accent-700: 126 34 206;
+  --color-accent-800: 107 33 168;
+  --color-accent-900: 88 28 135;
+  --color-accent-950: 59 7 100;
+
+  --gradient-from: #cb6de6;
+  --gradient-via: #a855f7;
+  --gradient-to: #6366f1;
+  --gradient-accent: #cb6de6;
+  --gradient-glow: rgba(203, 109, 230, 0.28);
+  --brand-active-bg: rgba(203, 109, 230, 0.1);
+  --brand-active-border: rgba(203, 109, 230, 0.3);
+  --brand-active-text: #a855f7;
+  --logo-filter: none;
 }
 
 .dark {
@@ -28,6 +63,269 @@
   --scrollbar-track: #0d1017;
   --scrollbar-thumb: #252d3d;
   --scrollbar-thumb-hover: #333f57;
+
+  /* Default Lunaria Gradient Dark */
+  --color-primary-50: 250 245 255;
+  --color-primary-100: 245 232 255;
+  --color-primary-200: 237 213 254;
+  --color-primary-300: 223 180 253;
+  --color-primary-400: 203 130 246;
+  --color-primary-500: 203 109 230;
+  --color-primary-600: 168 85 247;
+  --color-primary-700: 147 51 234;
+  --color-primary-800: 126 34 206;
+  --color-primary-900: 88 28 135;
+  --color-primary-950: 46 16 101;
+
+  --color-accent-50: 250 245 255;
+  --color-accent-100: 243 232 255;
+  --color-accent-200: 233 213 255;
+  --color-accent-300: 216 180 254;
+  --color-accent-400: 192 132 252;
+  --color-accent-500: 168 85 247;
+  --color-accent-600: 147 51 234;
+  --color-accent-700: 126 34 206;
+  --color-accent-800: 107 33 168;
+  --color-accent-900: 88 28 135;
+  --color-accent-950: 59 7 100;
+
+  --gradient-from: #cb6de6;
+  --gradient-via: #a855f7;
+  --gradient-to: #6366f1;
+  --gradient-accent: #cb6de6;
+  --gradient-glow: rgba(203, 109, 230, 0.32);
+  --brand-active-bg: rgba(203, 109, 230, 0.16);
+  --brand-active-border: rgba(203, 109, 230, 0.35);
+  --brand-active-text: #e5b4f2;
+  --logo-filter: none;
+}
+
+/* 1. Theme: Lunaria Orchid (Signature Default) */
+html[data-gradient="lunaria"], [data-gradient="lunaria"] {
+  --color-primary-50: 250 245 255;
+  --color-primary-100: 245 232 255;
+  --color-primary-200: 237 213 254;
+  --color-primary-300: 223 180 253;
+  --color-primary-400: 203 130 246;
+  --color-primary-500: 203 109 230;
+  --color-primary-600: 168 85 247;
+  --color-primary-700: 147 51 234;
+  --color-primary-800: 126 34 206;
+  --color-primary-900: 88 28 135;
+  --color-primary-950: 46 16 101;
+
+  --color-accent-50: 250 245 255;
+  --color-accent-100: 243 232 255;
+  --color-accent-200: 233 213 255;
+  --color-accent-300: 216 180 254;
+  --color-accent-400: 192 132 252;
+  --color-accent-500: 168 85 247;
+  --color-accent-600: 147 51 234;
+  --color-accent-700: 126 34 206;
+  --color-accent-800: 107 33 168;
+  --color-accent-900: 88 28 135;
+  --color-accent-950: 59 7 100;
+
+  --gradient-from: #cb6de6;
+  --gradient-via: #a855f7;
+  --gradient-to: #6366f1;
+  --gradient-accent: #cb6de6;
+  --gradient-glow: rgba(203, 109, 230, 0.3);
+  --card-hover-border: rgba(203, 109, 230, 0.35);
+  --brand-active-bg: rgba(203, 109, 230, 0.14);
+  --brand-active-border: rgba(203, 109, 230, 0.32);
+  --brand-active-text: #cb6de6;
+  --logo-filter: none;
+}
+
+/* 2. Theme: Emerald Aurora */
+html[data-gradient="aurora"], [data-gradient="aurora"] {
+  --color-primary-50: 236 253 245;
+  --color-primary-100: 209 250 229;
+  --color-primary-200: 167 243 208;
+  --color-primary-300: 110 231 183;
+  --color-primary-400: 52 211 153;
+  --color-primary-500: 16 185 129;
+  --color-primary-600: 5 150 105;
+  --color-primary-700: 4 120 87;
+  --color-primary-800: 6 95 70;
+  --color-primary-900: 6 78 59;
+  --color-primary-950: 2 44 34;
+
+  --color-accent-50: 240 253 250;
+  --color-accent-100: 204 251 241;
+  --color-accent-200: 153 246 228;
+  --color-accent-300: 94 234 212;
+  --color-accent-400: 45 212 191;
+  --color-accent-500: 20 184 166;
+  --color-accent-600: 13 148 136;
+  --color-accent-700: 15 118 110;
+  --color-accent-800: 17 94 89;
+  --color-accent-900: 19 78 74;
+  --color-accent-950: 4 47 46;
+
+  --gradient-from: #10b981;
+  --gradient-via: #14b8a6;
+  --gradient-to: #06b6d4;
+  --gradient-accent: #10b981;
+  --gradient-glow: rgba(16, 185, 129, 0.3);
+  --card-hover-border: rgba(16, 185, 129, 0.35);
+  --brand-active-bg: rgba(16, 185, 129, 0.14);
+  --brand-active-border: rgba(16, 185, 129, 0.32);
+  --brand-active-text: #10b981;
+  --logo-filter: hue-rotate(235deg) saturate(1.2);
+}
+
+/* 3. Theme: Solar Flare */
+html[data-gradient="sunset"], [data-gradient="sunset"] {
+  --color-primary-50: 255 247 237;
+  --color-primary-100: 255 237 213;
+  --color-primary-200: 254 215 170;
+  --color-primary-300: 253 186 116;
+  --color-primary-400: 251 146 60;
+  --color-primary-500: 249 115 22;
+  --color-primary-600: 234 88 12;
+  --color-primary-700: 194 65 12;
+  --color-primary-800: 154 52 18;
+  --color-primary-900: 124 45 18;
+  --color-primary-950: 67 20 7;
+
+  --color-accent-50: 255 251 235;
+  --color-accent-100: 254 243 199;
+  --color-accent-200: 253 230 138;
+  --color-accent-300: 252 211 77;
+  --color-accent-400: 251 191 36;
+  --color-accent-500: 245 158 11;
+  --color-accent-600: 217 119 6;
+  --color-accent-700: 180 83 9;
+  --color-accent-800: 146 64 14;
+  --color-accent-900: 120 53 15;
+  --color-accent-950: 69 26 3;
+
+  --gradient-from: #f59e0b;
+  --gradient-via: #f97316;
+  --gradient-to: #f43f5e;
+  --gradient-accent: #f97316;
+  --gradient-glow: rgba(249, 115, 22, 0.3);
+  --card-hover-border: rgba(249, 115, 22, 0.35);
+  --brand-active-bg: rgba(249, 115, 22, 0.14);
+  --brand-active-border: rgba(249, 115, 22, 0.32);
+  --brand-active-text: #f97316;
+  --logo-filter: hue-rotate(105deg) saturate(1.25);
+}
+
+/* 4. Theme: Oceanic Sapphire */
+html[data-gradient="sapphire"], [data-gradient="sapphire"] {
+  --color-primary-50: 239 246 255;
+  --color-primary-100: 219 234 254;
+  --color-primary-200: 191 219 254;
+  --color-primary-300: 147 197 253;
+  --color-primary-400: 96 165 250;
+  --color-primary-500: 59 130 246;
+  --color-primary-600: 37 99 235;
+  --color-primary-700: 29 78 216;
+  --color-primary-800: 30 64 175;
+  --color-primary-900: 30 58 138;
+  --color-primary-950: 23 37 84;
+
+  --color-accent-50: 240 249 255;
+  --color-accent-100: 224 242 254;
+  --color-accent-200: 186 230 253;
+  --color-accent-300: 125 211 252;
+  --color-accent-400: 56 189 248;
+  --color-accent-500: 14 165 233;
+  --color-accent-600: 2 132 199;
+  --color-accent-700: 3 105 161;
+  --color-accent-800: 7 89 133;
+  --color-accent-900: 12 74 110;
+  --color-accent-950: 8 47 73;
+
+  --gradient-from: #0ea5e9;
+  --gradient-via: #3b82f6;
+  --gradient-to: #6366f1;
+  --gradient-accent: #3b82f6;
+  --gradient-glow: rgba(59, 130, 246, 0.3);
+  --card-hover-border: rgba(59, 130, 246, 0.35);
+  --brand-active-bg: rgba(59, 130, 246, 0.14);
+  --brand-active-border: rgba(59, 130, 246, 0.32);
+  --brand-active-text: #3b82f6;
+  --logo-filter: hue-rotate(290deg) saturate(1.2);
+}
+
+/* 5. Theme: Neon Cyberpunk */
+html[data-gradient="neon"], [data-gradient="neon"] {
+  --color-primary-50: 253 242 248;
+  --color-primary-100: 252 231 243;
+  --color-primary-200: 249 168 212;
+  --color-primary-300: 244 114 182;
+  --color-primary-400: 236 72 153;
+  --color-primary-500: 217 70 239;
+  --color-primary-600: 192 38 211;
+  --color-primary-700: 162 28 175;
+  --color-primary-800: 134 25 143;
+  --color-primary-900: 112 26 117;
+  --color-primary-950: 74 4 78;
+
+  --color-accent-50: 250 245 255;
+  --color-accent-100: 243 232 255;
+  --color-accent-200: 233 213 255;
+  --color-accent-300: 216 180 254;
+  --color-accent-400: 168 85 247;
+  --color-accent-500: 139 92 246;
+  --color-accent-600: 124 58 237;
+  --color-accent-700: 109 40 217;
+  --color-accent-800: 91 33 182;
+  --color-accent-900: 76 29 149;
+  --color-accent-950: 46 16 101;
+
+  --gradient-from: #ec4899;
+  --gradient-via: #d946ef;
+  --gradient-to: #8b5cf6;
+  --gradient-accent: #ec4899;
+  --gradient-glow: rgba(236, 72, 153, 0.3);
+  --card-hover-border: rgba(236, 72, 153, 0.35);
+  --brand-active-bg: rgba(236, 72, 153, 0.14);
+  --brand-active-border: rgba(236, 72, 153, 0.32);
+  --brand-active-text: #ec4899;
+  --logo-filter: hue-rotate(45deg) saturate(1.3) contrast(1.05);
+}
+
+/* 6. Theme: Minimalist Platinum */
+html[data-gradient="monochrome"], [data-gradient="monochrome"] {
+  --color-primary-50: 248 250 252;
+  --color-primary-100: 241 245 249;
+  --color-primary-200: 226 232 240;
+  --color-primary-300: 203 213 225;
+  --color-primary-400: 148 163 184;
+  --color-primary-500: 100 116 139;
+  --color-primary-600: 71 85 105;
+  --color-primary-700: 51 65 85;
+  --color-primary-800: 30 41 59;
+  --color-primary-900: 15 23 42;
+  --color-primary-950: 2 6 23;
+
+  --color-accent-50: 250 250 250;
+  --color-accent-100: 244 244 245;
+  --color-accent-200: 228 228 231;
+  --color-accent-300: 212 212 216;
+  --color-accent-400: 161 161 170;
+  --color-accent-500: 113 113 122;
+  --color-accent-600: 82 82 91;
+  --color-accent-700: 63 63 70;
+  --color-accent-800: 39 39 42;
+  --color-accent-900: 24 24 27;
+  --color-accent-950: 9 9 11;
+
+  --gradient-from: #94a3b8;
+  --gradient-via: #64748b;
+  --gradient-to: #475569;
+  --gradient-accent: #94a3b8;
+  --gradient-glow: rgba(148, 163, 184, 0.25);
+  --card-hover-border: rgba(148, 163, 184, 0.35);
+  --brand-active-bg: rgba(148, 163, 184, 0.14);
+  --brand-active-border: rgba(148, 163, 184, 0.32);
+  --brand-active-text: #94a3b8;
+  --logo-filter: grayscale(100%) contrast(1.2) brightness(1.1);
 }
 
 html {
@@ -84,5 +382,108 @@ body {
   border-color: var(--card-hover-border);
   box-shadow: var(--card-hover-shadow);
   transform: translateY(-1px);
+}
+
+/* Brand Gradient Utilities */
+.bg-gradient-brand {
+  background-image: linear-gradient(135deg, var(--gradient-from), var(--gradient-via), var(--gradient-to));
+}
+
+.bg-gradient-brand-subtle {
+  background-image: linear-gradient(135deg, color-mix(in srgb, var(--gradient-from) 14%, transparent), color-mix(in srgb, var(--gradient-to) 8%, transparent));
+}
+
+.text-gradient-brand {
+  background-image: linear-gradient(135deg, var(--gradient-from), var(--gradient-to));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.border-gradient-brand {
+  border-color: var(--gradient-accent);
+}
+
+.btn-gradient-brand {
+  background-image: linear-gradient(135deg, var(--gradient-from), var(--gradient-via));
+  color: #ffffff;
+  box-shadow: 0 4px 14px 0 var(--gradient-glow);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-gradient-brand:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 6px 20px 0 var(--gradient-glow);
+  transform: translateY(-1px);
+}
+
+.btn-gradient-brand:active {
+  transform: scale(0.98);
+}
+
+.nav-link-brand-active {
+  background-color: var(--brand-active-bg);
+  border-color: var(--brand-active-border);
+  color: var(--brand-active-text);
+}
+
+/* Dynamic Logo Styling across all themes */
+img[src="/logo.png"],
+img[src$="/logo.png"],
+.logo-themed {
+  filter: var(--logo-filter, none);
+  transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Themed Button Highlights & Interactive Controls */
+.btn-primary-themed {
+  background-color: rgb(var(--color-primary-600));
+  color: #ffffff;
+  box-shadow: 0 4px 14px 0 var(--gradient-glow);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-primary-themed:hover {
+  background-color: rgb(var(--color-primary-500));
+  box-shadow: 0 6px 20px 0 var(--gradient-glow);
+  transform: translateY(-1px);
+}
+
+.btn-primary-themed:active {
+  transform: scale(0.98);
+}
+
+.btn-secondary-themed {
+  background-color: rgb(var(--color-primary-500) / 0.12);
+  color: rgb(var(--color-primary-600));
+  border: 1px solid rgb(var(--color-primary-500) / 0.25);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark .btn-secondary-themed {
+  color: rgb(var(--color-primary-400));
+  background-color: rgb(var(--color-primary-500) / 0.16);
+  border-color: rgb(var(--color-primary-500) / 0.3);
+}
+
+.btn-secondary-themed:hover {
+  background-color: rgb(var(--color-primary-500) / 0.22);
+  border-color: rgb(var(--color-primary-500) / 0.4);
+}
+
+/* Themed Focus Ring */
+*:focus-visible {
+  outline-color: var(--gradient-accent);
+}
+
+/* Custom selection styling tied to theme */
+::selection {
+  background-color: rgb(var(--color-primary-500) / 0.25);
+  color: rgb(var(--color-primary-700));
+}
+
+.dark ::selection {
+  background-color: rgb(var(--color-primary-500) / 0.35);
+  color: rgb(var(--color-primary-200));
 }
 

@@ -229,17 +229,80 @@ export class AuthService {
     };
   }
 
-  async resolveUserId(providedUserId?: string, authHeader?: string): Promise<string> {
-    // 1. Try JWT Authorization Bearer header
+  extractToken(authHeader?: string, cookieHeader?: string): string | null {
     if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.substring(7).trim();
+      return authHeader.substring(7).trim();
+    }
+    if (authHeader && authHeader.includes('lunaria_token=')) {
+      const match = authHeader.match(/(?:^|;\s*)lunaria_token=([^;]+)/);
+      if (match) return decodeURIComponent(match[1].trim());
+    }
+    if (cookieHeader) {
+      const match = cookieHeader.match(/(?:^|;\s*)lunaria_token=([^;]+)/);
+      if (match) return decodeURIComponent(match[1].trim());
+    }
+    return null;
+  }
+
+  async resolveUserId(
+    providedUserId?: string,
+    authHeader?: string,
+    apiKeyHeader?: string,
+    cookieHeader?: string,
+  ): Promise<string> {
+    // 1. Agent API Key authentication (for OpenClaw / autonomous agent integration)
+    const agentKey =
+      this.configService.get<string>('LUNARIA_AGENT_API_KEY') ||
+      process.env.LUNARIA_AGENT_API_KEY;
+
+    if (agentKey && agentKey.trim().length >= 8) {
+      const bearerCandidate =
+        authHeader && authHeader.startsWith('Bearer ')
+          ? authHeader.substring(7).trim()
+          : null;
+      const keyCandidate = (apiKeyHeader || bearerCandidate || '').trim();
+
+      if (keyCandidate && keyCandidate === agentKey.trim()) {
+        const targetEmail = (
+          this.configService.get<string>('LUNARIA_AGENT_USER_EMAIL') ||
+          process.env.LUNARIA_AGENT_USER_EMAIL ||
+          'thisisbryanchan@gmail.com'
+        ).trim().toLowerCase();
+
+        // 1. Look up user by explicitly bound email
+        const [targetUser] = await this.db
+          .select({ id: users.id })
+          .from(users)
+          .where(eq(users.email, targetEmail))
+          .limit(1);
+
+        if (targetUser) {
+          return targetUser.id;
+        }
+
+        // 2. Fallback to the primary account owner (oldest user)
+        const [primaryUser] = await this.db
+          .select({ id: users.id })
+          .from(users)
+          .orderBy(users.createdAt)
+          .limit(1);
+
+        if (primaryUser) {
+          return primaryUser.id;
+        }
+      }
+    }
+
+    // 2. Try JWT Authorization Bearer header OR HttpOnly session cookie
+    const token = this.extractToken(authHeader, cookieHeader);
+    if (token) {
       try {
         const payload = this.verifyToken(token);
         if (payload?.sub) {
           return payload.sub;
         }
       } catch (err: any) {
-        this.logger.warn(`Failed to verify Bearer token: ${err?.message || err}`);
+        this.logger.warn(`Failed to verify token: ${err?.message || err}`);
       }
     }
 
